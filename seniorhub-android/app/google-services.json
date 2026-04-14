@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1080402933620",
+    "project_id": "seniorhub-716f0",
+    "storage_bucket": "seniorhub-716f0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080402933620:android:4a92750e9b6f9878249e21",
+        "android_client_info": {
+          "package_name": "com.seniorhub.os"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBKUIMmRxEaQIaMO0KpqosL4A_RX4jDd8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

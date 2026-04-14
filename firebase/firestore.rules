@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function devicePath(deviceId) {
+      return /databases/$(database)/documents/devices/$(deviceId);
+    }
+
+    function deviceAdminPath(deviceId, uid) {
+      return /databases/$(database)/documents/deviceAdmins/$(deviceId + "_" + uid);
+    }
+
+    function pairingPath(code) {
+      return /databases/$(database)/documents/pairingClaims/$(code);
+    }
+
+    function isDeviceSelf(deviceId) {
+      return signedIn()
+        && exists(devicePath(deviceId))
+        && get(devicePath(deviceId)).data.deviceAuthUid == request.auth.uid;
+    }
+
+    function isDeviceAdmin(deviceId) {
+      return signedIn() && exists(deviceAdminPath(deviceId, request.auth.uid));
+    }
+
+    function canAccessDevice(deviceId) {
+      return isDeviceSelf(deviceId) || isDeviceAdmin(deviceId);
+    }
+
+    function validPairingClaim(code, deviceId) {
+      return code is string
+        && exists(pairingPath(code))
+        && existsAfter(pairingPath(code))
+        && get(pairingPath(code)).data.deviceId == deviceId
+        && get(pairingPath(code)).data.usedAt == null
+        && get(pairingPath(code)).data.expiresAt > request.time
+        && getAfter(pairingPath(code)).data.deviceId == deviceId
+        && getAfter(pairingPath(code)).data.usedByUid == request.auth.uid
+        && getAfter(pairingPath(code)).data.usedAt != null;
+    }
+
+    match /devices/{deviceId} {
+      allow create: if signedIn()
+        && request.resource.data.deviceAuthUid == request.auth.uid;
+
+      allow read, update: if canAccessDevice(deviceId);
+      allow delete: if false;
+
+      match /contacts/{contactId} {
+        allow read, write: if canAccessDevice(deviceId);
+      }
+
+      // Jednotný dokument nastavení (PIN správce, SIM, jméno asistenta) — viz PROJECT_CONTEXT / oldies_project.md
+      match /config/{configDocId} {
+        allow read, write: if canAccessDevice(deviceId);
+      }
+    }
+
+    match /deviceAdmins/{joinId} {
+      allow read: if signedIn()
+        && (
+          resource.data.uid == request.auth.uid
+          || isDeviceAdmin(resource.data.deviceId)
+          || isDeviceSelf(resource.data.deviceId)
+        );
+
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.deviceId is string
+        && request.resource.data.role in ['admin', 'viewer']
+        && validPairingClaim(
+          request.resource.data.claimCode,
+          request.resource.data.deviceId
+        );
+
+      allow update, delete: if false;
+    }
+
+    match /pairingClaims/{code} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.deviceId is string
+        && request.resource.data.deviceAuthUid == request.auth.uid
+        && exists(devicePath(request.resource.data.deviceId))
+        && get(devicePath(request.resource.data.deviceId)).data.deviceAuthUid == request.auth.uid
+        && request.resource.data.usedAt == null
+        && request.resource.data.usedByUid == null;
+
+      allow update: if signedIn()
+        && resource.data.usedAt == null
+        && resource.data.expiresAt > request.time
+        && request.resource.data.deviceId == resource.data.deviceId
+        && request.resource.data.deviceAuthUid == resource.data.deviceAuthUid
+        && request.resource.data.code == resource.data.code
+        && request.resource.data.usedByUid == request.auth.uid
+        && request.resource.data.usedAt != null;
+
+      allow delete: if false;
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+  }
+}

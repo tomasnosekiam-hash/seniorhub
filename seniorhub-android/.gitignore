@@ -1,0 +1,10 @@
+/.gradle/
+# Sdílená run konfigurace zůstane v repu; zbytek .idea lokálně.
+/.idea/*
+!/.idea/runConfigurations/
+!/.idea/runConfigurations/**
+/build/
+**/build/
+*.iml
+local.properties
+.DS_Store

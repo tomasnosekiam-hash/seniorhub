@@ -1,0 +1,20 @@
+# OS / IDE
+.DS_Store
+.idea/
+*.iml
+.jdks/
+
+# Secrets (monorepo root + podsložky)
+.env
+.env.*
+!.env.example
+
+# Web
+seniorhub-web/node_modules/
+seniorhub-web/dist/
+
+# Android
+seniorhub-android/.gradle/
+seniorhub-android/.kotlin/
+seniorhub-android/**/build/
+seniorhub-android/local.properties
