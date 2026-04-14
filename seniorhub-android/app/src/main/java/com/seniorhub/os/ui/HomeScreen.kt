@@ -1,8 +1,12 @@
 package com.seniorhub.os.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +27,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,18 +37,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seniorhub.os.data.Contact
+import com.seniorhub.os.data.DeviceConfig
+import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
 import com.seniorhub.os.ui.theme.SeniorHubTheme
+import com.seniorhub.os.util.SmsSender
+import com.seniorhub.os.util.normalizePhoneForDial
+import com.seniorhub.os.util.openDialPad
+import com.seniorhub.os.util.startOutgoingCall
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -52,35 +68,127 @@ fun HomeRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    HomeScreen(
-        state = state,
-        onDismissAlert = viewModel::dismissAlert,
-        onShowPairing = viewModel::showPairingSheet,
-        onHidePairing = viewModel::hidePairingSheet,
-        onRefreshPairing = { viewModel.refreshPairingCode(force = true) },
-        onKioskSecretTap = viewModel::onKioskSecretTap,
-        onDismissKioskUnlock = viewModel::dismissKioskUnlock,
-        onSubmitKioskPin = { pin ->
-            if (viewModel.tryUnlockWithPin(pin)) {
-                context.startActivity(
-                    Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
-            }
-        },
-        modifier = modifier,
-    )
+    var pendingCallPhone by remember { mutableStateOf<String?>(null) }
+    var smsTarget by remember { mutableStateOf<Contact?>(null) }
+    var smsSendError by remember { mutableStateOf<String?>(null) }
+    var pendingSms by remember { mutableStateOf<Pair<String, String>?>(null) }
+    val callPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        val raw = pendingCallPhone
+        pendingCallPhone = null
+        if (raw == null) return@rememberLauncherForActivityResult
+        if (granted) {
+            context.startOutgoingCall(raw)
+        } else {
+            context.openDialPad(raw)
+        }
+    }
+    val smsPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        val pending = pendingSms
+        pendingSms = null
+        if (pending == null) return@rememberLauncherForActivityResult
+        if (granted) {
+            SmsSender.send(context, pending.first, pending.second).fold(
+                onSuccess = {
+                    smsTarget = null
+                    smsSendError = null
+                },
+                onFailure = { e ->
+                    smsSendError = e.message ?: "Odeslání se nezdařilo."
+                },
+            )
+        } else {
+            smsSendError = "Bez oprávnění k SMS nelze odeslat."
+        }
+    }
+    Box(modifier = modifier) {
+        HomeScreen(
+            state = state,
+            onDismissAlert = viewModel::dismissAlert,
+            onDismissUnreadMessage = viewModel::dismissUnreadMessage,
+            onShowPairing = viewModel::showPairingSheet,
+            onHidePairing = viewModel::hidePairingSheet,
+            onRefreshPairing = { viewModel.refreshPairingCode(force = true) },
+            onKioskSecretTap = viewModel::onKioskSecretTap,
+            onDismissKioskUnlock = viewModel::dismissKioskUnlock,
+            onSubmitKioskPin = { pin ->
+                if (viewModel.tryUnlockWithPin(pin)) {
+                    context.startActivity(
+                        Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }
+            },
+            onContactCall = { rawPhone ->
+                if (normalizePhoneForDial(rawPhone) != null) {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) ==
+                        PackageManager.PERMISSION_GRANTED
+                    ) {
+                        context.startOutgoingCall(rawPhone)
+                    } else {
+                        pendingCallPhone = rawPhone
+                        callPermissionLauncher.launch(Manifest.permission.CALL_PHONE)
+                    }
+                }
+            },
+            onContactSms = { contact ->
+                smsSendError = null
+                smsTarget = contact
+            },
+            modifier = Modifier.fillMaxSize(),
+        )
+        smsTarget?.let { contact ->
+            SmsComposeOverlay(
+                contact = contact,
+                errorMessage = smsSendError,
+                onDismiss = {
+                    smsTarget = null
+                    smsSendError = null
+                    pendingSms = null
+                },
+                onSend = { body ->
+                    smsSendError = null
+                    when {
+                        normalizePhoneForDial(contact.phone) == null -> {
+                            smsSendError = "Neplatné telefonní číslo."
+                        }
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) ==
+                            PackageManager.PERMISSION_GRANTED -> {
+                            SmsSender.send(context, contact.phone, body).fold(
+                                onSuccess = {
+                                    smsTarget = null
+                                },
+                                onFailure = { e ->
+                                    smsSendError = e.message ?: "Odeslání se nezdařilo."
+                                },
+                            )
+                        }
+                        else -> {
+                            pendingSms = contact.phone to body
+                            smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
+                        }
+                    }
+                },
+            )
+        }
+    }
 }
 
 @Composable
 fun HomeScreen(
     state: HomeUiState,
     onDismissAlert: () -> Unit,
+    onDismissUnreadMessage: () -> Unit,
     onShowPairing: () -> Unit,
     onHidePairing: () -> Unit,
     onRefreshPairing: () -> Unit,
     onKioskSecretTap: () -> Unit,
     onDismissKioskUnlock: () -> Unit,
     onSubmitKioskPin: (String) -> Unit,
+    onContactCall: (String) -> Unit,
+    onContactSms: (Contact) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -102,6 +210,7 @@ fun HomeScreen(
             ) {
                 StatusColumn(
                     device = state.device,
+                    deviceConfig = state.deviceConfig,
                     onShowPairing = onShowPairing,
                     modifier = Modifier
                         .weight(0.38f)
@@ -109,6 +218,8 @@ fun HomeScreen(
                 )
                 ContactsColumn(
                     contacts = state.contacts,
+                    onContactCall = onContactCall,
+                    onContactSms = onContactSms,
                     modifier = Modifier
                         .weight(0.62f)
                         .fillMaxSize(),
@@ -155,15 +266,25 @@ fun HomeScreen(
                 onSubmit = onSubmitKioskPin,
             )
         }
+
+        state.unreadMessage?.let { msg ->
+            MessageOverlay(message = msg, onDismiss = onDismissUnreadMessage)
+        }
     }
 }
 
 @Composable
 private fun StatusColumn(
     device: DeviceSettings?,
+    deviceConfig: DeviceConfig?,
     onShowPairing: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val seniorDisplay = listOfNotNull(
+        deviceConfig?.seniorFirstName?.trim()?.takeIf { it.isNotEmpty() },
+        deviceConfig?.seniorLastName?.trim()?.takeIf { it.isNotEmpty() },
+    ).joinToString(" ")
+    val address = deviceConfig?.addressLine?.trim().orEmpty()
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")),
@@ -177,6 +298,23 @@ private fun StatusColumn(
             fontSize = 28.sp,
             fontWeight = FontWeight.Medium,
         )
+        if (seniorDisplay.isNotBlank()) {
+            Text(
+                text = "Senior: $seniorDisplay",
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        if (address.isNotBlank()) {
+            Text(
+                text = address,
+                color = Color.White.copy(alpha = 0.88f),
+                fontSize = 18.sp,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         Text(
             text = "ID zařízení: ${device?.deviceId ?: "—"}",
             color = Color.White.copy(alpha = 0.82f),
@@ -187,6 +325,16 @@ private fun StatusColumn(
             color = Color.White,
             fontSize = 22.sp,
         )
+        device?.batteryPercent?.let { pct ->
+            Text(
+                text = buildString {
+                    append("Baterie: $pct %")
+                    if (device.charging) append(" · nabíjení")
+                },
+                color = Color.White.copy(alpha = 0.92f),
+                fontSize = 20.sp,
+            )
+        }
         if (device != null) {
             PairingSummaryCard(
                 paired = device.paired,
@@ -201,6 +349,8 @@ private fun StatusColumn(
 @Composable
 private fun ContactsColumn(
     contacts: List<Contact>,
+    onContactCall: (String) -> Unit,
+    onContactSms: (Contact) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -225,7 +375,13 @@ private fun ContactsColumn(
                 }
             } else {
                 items(contacts, key = { it.id }) { c ->
-                    ContactRow(contact = c)
+                    ContactRow(
+                        contact = c,
+                        onCall = {
+                            if (c.phone.isNotBlank()) onContactCall(c.phone)
+                        },
+                        onSms = { onContactSms(c) },
+                    )
                 }
             }
         }
@@ -233,13 +389,29 @@ private fun ContactsColumn(
 }
 
 @Composable
-private fun ContactRow(contact: Contact) {
+private fun ContactRow(
+    contact: Contact,
+    onCall: () -> Unit,
+    onSms: () -> Unit,
+) {
+    val canCommunicate = contact.phone.isNotBlank() && normalizePhoneForDial(contact.phone) != null
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF111111))
+            .background(
+                if (contact.isEmergency) Color(0xFF2A1518) else Color(0xFF111111),
+            )
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
+        if (contact.isEmergency) {
+            Text(
+                text = "NOUZE",
+                color = Color(0xFFFF6666),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
         Text(
             text = contact.name.ifEmpty { "(bez jména)" },
             color = Color.White,
@@ -253,6 +425,124 @@ private fun ContactRow(contact: Contact) {
             color = Color.White.copy(alpha = 0.9f),
             fontSize = 18.sp,
         )
+        if (canCommunicate) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(
+                    onClick = onCall,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2A2A2A),
+                        contentColor = Color(0xFFFFFF00),
+                    ),
+                ) {
+                    Text("Zavolat", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = onSms,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2A2A2A),
+                        contentColor = Color(0xFFFFFF00),
+                    ),
+                ) {
+                    Text("SMS", fontSize = 18.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SmsComposeOverlay(
+    contact: Contact,
+    errorMessage: String?,
+    onDismiss: () -> Unit,
+    onSend: (String) -> Unit,
+) {
+    var text by remember(contact.id) { mutableStateOf("") }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xEE000000)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .background(Color(0xFF111111))
+                .border(1.dp, Color(0xFFFFFF00))
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                text = "SMS pro ${contact.name.ifEmpty { contact.phone }}",
+                color = Color(0xFFFFFF00),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = contact.phone,
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 18.sp,
+            )
+            OutlinedTextField(
+                value = text,
+                onValueChange = { if (it.length <= 2000) text = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 140.dp),
+                minLines = 4,
+                placeholder = {
+                    Text("Text zprávy…", color = Color.White.copy(alpha = 0.45f))
+                },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color(0xFFFFFF00),
+                    focusedBorderColor = Color(0xFFFFFF00),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.35f),
+                ),
+            )
+            errorMessage?.let { err ->
+                Text(
+                    text = err,
+                    color = Color(0xFFFF6666),
+                    fontSize = 16.sp,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF333333),
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Text("Zrušit", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = { onSend(text) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFFF00),
+                        contentColor = Color.Black,
+                    ),
+                ) {
+                    Text("Odeslat", fontSize = 18.sp)
+                }
+            }
+        }
     }
 }
 
@@ -300,6 +590,53 @@ private fun PairingSummaryCard(
                 color = Color.White.copy(alpha = 0.78f),
                 fontSize = 16.sp,
             )
+        }
+    }
+}
+
+@Composable
+private fun MessageOverlay(
+    message: DeviceMessage,
+    onDismiss: () -> Unit,
+) {
+    val title = message.senderDisplayName?.takeIf { it.isNotBlank() } ?: "Vzkaz od rodiny"
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xE6000000)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth(0.88f)
+                .background(Color(0xFF0D3320))
+                .border(1.dp, Color(0xFF22C55E))
+                .padding(24.dp),
+        ) {
+            Text(
+                text = title,
+                color = Color(0xFF86EFAC),
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = message.body,
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF22C55E),
+                    contentColor = Color.Black,
+                ),
+            ) {
+                Text("Přečetl jsem", fontSize = 20.sp)
+            }
         }
     }
 }
@@ -582,12 +919,15 @@ private fun HomeScreenPreview() {
                 errorMessage = null,
             ),
             onDismissAlert = {},
+            onDismissUnreadMessage = {},
             onShowPairing = {},
             onHidePairing = {},
             onRefreshPairing = {},
             onKioskSecretTap = {},
             onDismissKioskUnlock = {},
             onSubmitKioskPin = {},
+            onContactCall = {},
+            onContactSms = {},
         )
     }
 }
@@ -612,12 +952,15 @@ private fun HomeScreenAlertPreview() {
                 errorMessage = null,
             ),
             onDismissAlert = {},
+            onDismissUnreadMessage = {},
             onShowPairing = {},
             onHidePairing = {},
             onRefreshPairing = {},
             onKioskSecretTap = {},
             onDismissKioskUnlock = {},
             onSubmitKioskPin = {},
+            onContactCall = {},
+            onContactSms = {},
         )
     }
 }
@@ -629,12 +972,15 @@ private fun HomeScreenLoadingPreview() {
         HomeScreen(
             state = HomeUiState(loading = true),
             onDismissAlert = {},
+            onDismissUnreadMessage = {},
             onShowPairing = {},
             onHidePairing = {},
             onRefreshPairing = {},
             onKioskSecretTap = {},
             onDismissKioskUnlock = {},
             onSubmitKioskPin = {},
+            onContactCall = {},
+            onContactSms = {},
         )
     }
 }

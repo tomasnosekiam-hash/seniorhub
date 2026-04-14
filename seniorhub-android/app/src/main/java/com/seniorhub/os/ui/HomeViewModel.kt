@@ -1,23 +1,32 @@
 package com.seniorhub.os.ui
 
+import android.app.Application
 import android.os.SystemClock
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.seniorhub.os.data.Contact
 import com.seniorhub.os.data.DeviceConfig
+import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
 import com.seniorhub.os.data.MvpRepository
+import com.seniorhub.os.util.readBatteryStatus
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+
+private const val HEARTBEAT_INTERVAL_MS = 3 * 60 * 1000L
 
 data class HomeUiState(
     val loading: Boolean = true,
     val device: DeviceSettings? = null,
     val deviceConfig: DeviceConfig? = null,
     val contacts: List<Contact> = emptyList(),
+    /** Nejnovější nepřečtený vzkaz (seznam na serveru je řazen podle `createdAt` sestupně). */
+    val unreadMessage: DeviceMessage? = null,
     val showPairingSheet: Boolean = false,
     val showKioskUnlock: Boolean = false,
     val kioskUnlockError: String? = null,
@@ -25,8 +34,9 @@ data class HomeUiState(
 )
 
 class HomeViewModel(
+    application: Application,
     private val repository: MvpRepository,
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
@@ -36,22 +46,34 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
+            while (isActive) {
+                runCatching {
+                    val status = readBatteryStatus(getApplication())
+                    repository.postDeviceHeartbeat(status.percent, status.charging)
+                }
+                delay(HEARTBEAT_INTERVAL_MS)
+            }
+        }
+        viewModelScope.launch {
             runCatching { repository.bootstrapDevice() }
             combine(
                 repository.observeDevice(),
                 repository.observeContacts(),
                 repository.observeDeviceConfig(),
-            ) { deviceResult, contactsResult, configResult ->
+                repository.observeMessages(),
+            ) { deviceResult, contactsResult, configResult, messagesResult ->
                 val deviceError = deviceResult.exceptionOrNull()
                 val contactsError = contactsResult.exceptionOrNull()
                 val configError = configResult.exceptionOrNull()
-                val err = deviceError ?: contactsError ?: configError
+                val messagesError = messagesResult.exceptionOrNull()
+                val err = deviceError ?: contactsError ?: configError ?: messagesError
                 if (err != null) {
                     HomeUiState(
                         loading = false,
                         device = null,
                         deviceConfig = null,
                         contacts = emptyList(),
+                        unreadMessage = null,
                         showPairingSheet = false,
                         showKioskUnlock = false,
                         kioskUnlockError = null,
@@ -59,11 +81,14 @@ class HomeViewModel(
                     )
                 } else {
                     val device = deviceResult.getOrNull()
+                    val messages = messagesResult.getOrElse { emptyList() }
+                    val unread = messages.firstOrNull { it.readAt == null && it.body.isNotBlank() }
                     HomeUiState(
                         loading = false,
                         device = device,
                         deviceConfig = configResult.getOrNull(),
                         contacts = contactsResult.getOrElse { emptyList() },
+                        unreadMessage = unread,
                         showPairingSheet = device?.paired != true,
                         showKioskUnlock = false,
                         kioskUnlockError = null,
@@ -85,6 +110,13 @@ class HomeViewModel(
     fun dismissAlert() {
         viewModelScope.launch {
             runCatching { repository.dismissAlert() }
+        }
+    }
+
+    fun dismissUnreadMessage() {
+        val id = _state.value.unreadMessage?.id ?: return
+        viewModelScope.launch {
+            runCatching { repository.markMessageRead(id) }
         }
     }
 

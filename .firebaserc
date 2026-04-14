@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "firebase deploy --only firestore:rules": "seniorhub-716f0"
+  },
+  "targets": {},
+  "etags": {}
+}

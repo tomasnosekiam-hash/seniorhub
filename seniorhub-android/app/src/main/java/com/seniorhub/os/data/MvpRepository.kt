@@ -86,12 +86,18 @@ class MvpRepository(
                     val sim = snapshot.getString(KEY_SIM_NUMBER)?.trim().orEmpty()
                     val assistant = snapshot.getString(KEY_ASSISTANT_NAME)?.trim().orEmpty()
                         .ifEmpty { DEFAULT_ASSISTANT_NAME }
+                    val seniorFirst = snapshot.getString(KEY_SENIOR_FIRST_NAME)?.trim().orEmpty()
+                    val seniorLast = snapshot.getString(KEY_SENIOR_LAST_NAME)?.trim().orEmpty()
+                    val address = snapshot.getString(KEY_ADDRESS_LINE)?.trim().orEmpty()
                     trySend(
                         Result.success(
                             DeviceConfig(
                                 adminPin = pin,
                                 simNumber = sim,
                                 assistantName = assistant,
+                                seniorFirstName = seniorFirst,
+                                seniorLastName = seniorLast,
+                                addressLine = address,
                             ),
                         ),
                     )
@@ -118,6 +124,11 @@ class MvpRepository(
                         .ifEmpty { null }
                     val pairingExpiresAtLabel = snapshot.getTimestamp(KEY_PAIRING_EXPIRES_AT)
                         ?.toPairingLabel()
+                    val batteryRaw = snapshot.getLong(KEY_BATTERY_PERCENT)
+                    val batteryPercent = batteryRaw?.toInt()?.coerceIn(0, 100)
+                    val charging = snapshot.getBoolean(KEY_CHARGING) == true
+                    val lastHeartbeatAtLabel = snapshot.getTimestamp(KEY_LAST_HEARTBEAT_AT)
+                        ?.toHeartbeatLabel()
                     trySend(
                         Result.success(
                             DeviceSettings(
@@ -128,6 +139,9 @@ class MvpRepository(
                                 paired = paired,
                                 pairingCode = pairingCode,
                                 pairingExpiresAtLabel = pairingExpiresAtLabel,
+                                batteryPercent = batteryPercent,
+                                charging = charging,
+                                lastHeartbeatAtLabel = lastHeartbeatAtLabel,
                             ),
                         ),
                     )
@@ -135,6 +149,66 @@ class MvpRepository(
             }
         }
         awaitClose { registration.remove() }
+    }
+
+    fun observeMessages(): Flow<Result<List<DeviceMessage>>> = callbackFlow {
+        val registration = deviceRef.collection(SUB_MESSAGES)
+            .orderBy(KEY_CREATED_AT, Query.Direction.DESCENDING)
+            .limit(50)
+            .addSnapshotListener { snapshot, error ->
+                when {
+                    error != null -> trySend(Result.failure(error))
+                    snapshot == null -> trySend(Result.success(emptyList()))
+                    else -> {
+                        val list = snapshot.documents.map { doc ->
+                            DeviceMessage(
+                                id = doc.id,
+                                body = doc.getString(KEY_BODY)?.trim().orEmpty(),
+                                createdAt = doc.getTimestamp(KEY_CREATED_AT),
+                                readAt = doc.getTimestamp(KEY_READ_AT),
+                                senderDisplayName = doc.getString(KEY_SENDER_DISPLAY_NAME)?.trim()
+                                    ?.takeIf { it.isNotEmpty() },
+                            )
+                        }
+                        trySend(Result.success(list))
+                    }
+                }
+            }
+        awaitClose { registration.remove() }
+    }
+
+    suspend fun markMessageRead(messageId: String) {
+        signInDevice()
+        deviceRef.collection(SUB_MESSAGES).document(messageId).update(
+            mapOf(KEY_READ_AT to FieldValue.serverTimestamp()),
+        ).await()
+    }
+
+    suspend fun registerFcmToken(token: String) {
+        signInDevice()
+        deviceRef.set(
+            mapOf(
+                KEY_FCM_REGISTRATION_TOKEN to token,
+                "lastSeenAt" to FieldValue.serverTimestamp(),
+            ),
+            com.google.firebase.firestore.SetOptions.merge(),
+        ).await()
+    }
+
+    /**
+     * Pravidelný „životní“ signál pro správce (baterie, nabíjení, čas posledního kontaktu).
+     */
+    suspend fun postDeviceHeartbeat(batteryPercent: Int?, charging: Boolean) {
+        signInDevice()
+        val payload = mutableMapOf<String, Any>(
+            KEY_LAST_HEARTBEAT_AT to FieldValue.serverTimestamp(),
+            "lastSeenAt" to FieldValue.serverTimestamp(),
+            KEY_CHARGING to charging,
+        )
+        if (batteryPercent != null) {
+            payload[KEY_BATTERY_PERCENT] = batteryPercent
+        }
+        deviceRef.set(payload, com.google.firebase.firestore.SetOptions.merge()).await()
     }
 
     fun observeContacts(): Flow<Result<List<Contact>>> = callbackFlow {
@@ -149,7 +223,12 @@ class MvpRepository(
                             val name = doc.getString(KEY_NAME)?.trim().orEmpty()
                             val phone = doc.getString(KEY_PHONE)?.trim().orEmpty()
                             if (name.isEmpty() && phone.isEmpty()) return@mapNotNull null
-                            Contact(id = doc.id, name = name, phone = phone)
+                            Contact(
+                                id = doc.id,
+                                name = name,
+                                phone = phone,
+                                isEmergency = doc.getBoolean(KEY_IS_EMERGENCY) == true,
+                            )
                         }
                         trySend(Result.success(list))
                     }
@@ -222,6 +301,11 @@ class MvpRepository(
         return PAIRING_FORMATTER.format(local)
     }
 
+    private fun Timestamp.toHeartbeatLabel(): String {
+        val local = toDate().toInstant().atZone(ZoneId.systemDefault())
+        return HEARTBEAT_FORMATTER.format(local)
+    }
+
     private fun generatePairingCode(): String {
         val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
         return buildString(6) {
@@ -235,11 +319,20 @@ class MvpRepository(
         const val COLLECTION = "devices"
         const val PAIRING_COLLECTION = "pairingClaims"
         const val SUB_CONTACTS = "contacts"
+        const val SUB_MESSAGES = "messages"
         const val SUB_CONFIG = "config"
+        const val KEY_BODY = "body"
+        const val KEY_CREATED_AT = "createdAt"
+        const val KEY_READ_AT = "readAt"
+        const val KEY_SENDER_DISPLAY_NAME = "senderDisplayName"
+        const val KEY_FCM_REGISTRATION_TOKEN = "fcmRegistrationToken"
         const val CONFIG_DOC_ID = "main"
         const val KEY_ADMIN_PIN = "admin_pin"
         const val KEY_SIM_NUMBER = "sim_number"
         const val KEY_ASSISTANT_NAME = "assistant_name"
+        const val KEY_SENIOR_FIRST_NAME = "senior_first_name"
+        const val KEY_SENIOR_LAST_NAME = "senior_last_name"
+        const val KEY_ADDRESS_LINE = "address_line"
         private const val DEFAULT_ASSISTANT_NAME = "Matěj"
         const val KEY_DEVICE_ID = "deviceId"
         const val KEY_DEVICE_AUTH_UID = "deviceAuthUid"
@@ -251,6 +344,7 @@ class MvpRepository(
         const val KEY_PAIRING_EXPIRES_AT = "pairingExpiresAt"
         const val KEY_NAME = "name"
         const val KEY_PHONE = "phone"
+        const val KEY_IS_EMERGENCY = "is_emergency"
         const val KEY_SORT_ORDER = "sortOrder"
         const val KEY_CODE = "code"
         const val KEY_EXPIRES_AT = "expiresAt"
@@ -259,5 +353,10 @@ class MvpRepository(
 
         private const val PAIRING_LIFETIME_SECONDS = 10 * 60L
         private val PAIRING_FORMATTER = DateTimeFormatter.ofPattern("HH:mm")
+        private val HEARTBEAT_FORMATTER = DateTimeFormatter.ofPattern("d.M. HH:mm")
+
+        const val KEY_BATTERY_PERCENT = "batteryPercent"
+        const val KEY_CHARGING = "charging"
+        const val KEY_LAST_HEARTBEAT_AT = "lastHeartbeatAt"
     }
 }

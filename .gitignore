@@ -8,9 +8,12 @@
 .env
 .env.*
 !.env.example
+github_token.md
 
 # Web
 seniorhub-web/node_modules/
+firebase/functions/node_modules/
+firebase/functions/lib/
 seniorhub-web/dist/
 
 # Android

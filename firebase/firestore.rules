@@ -31,6 +31,27 @@ service cloud.firestore {
       return isDeviceSelf(deviceId) || isDeviceAdmin(deviceId);
     }
 
+    // Čtení dokumentu zařízení: vlastník/admin NEBO prázdný dokument (první běh) NEBO
+    // stejné deviceId ve poli (tablet po přeinstalaci s novým anonymním uid — před opravou deviceAuthUid).
+    function canReadDeviceDoc(deviceId) {
+      return canAccessDevice(deviceId)
+        || (signedIn() && resource == null)
+        || (signedIn()
+          && resource != null
+          && (!resource.data.keys().hasAll(['deviceId']) || resource.data.deviceId == deviceId));
+    }
+
+    // Zápis metadat zařízení: plný přístup NEBO „znovu navázání“ stejného fyzického tabletu
+    // (musí zůstat deviceId v poli shodné s cestou a nové uid = přihlášený uživatel).
+    function canWriteDeviceDoc(deviceId) {
+      return canAccessDevice(deviceId)
+        || (signedIn()
+          && request.resource.data.keys().hasAll(['deviceId', 'deviceAuthUid'])
+          && request.resource.data.deviceId == deviceId
+          && request.resource.data.deviceAuthUid == request.auth.uid
+          && (!resource.data.keys().hasAll(['deviceId']) || resource.data.deviceId == deviceId));
+    }
+
     function validPairingClaim(code, deviceId) {
       return code is string
         && exists(pairingPath(code))
@@ -45,9 +66,11 @@ service cloud.firestore {
 
     match /devices/{deviceId} {
       allow create: if signedIn()
-        && request.resource.data.deviceAuthUid == request.auth.uid;
+        && request.resource.data.deviceAuthUid == request.auth.uid
+        && request.resource.data.deviceId == deviceId;
 
-      allow read, update: if canAccessDevice(deviceId);
+      allow read: if canReadDeviceDoc(deviceId);
+      allow update: if canWriteDeviceDoc(deviceId);
       allow delete: if false;
 
       match /contacts/{contactId} {
@@ -57,6 +80,21 @@ service cloud.firestore {
       // Jednotný dokument nastavení (PIN správce, SIM, jméno asistenta) — viz PROJECT_CONTEXT / oldies_project.md
       match /config/{configDocId} {
         allow read, write: if canAccessDevice(deviceId);
+      }
+
+      // Vzkazy (web → tablet); přečtení zapisuje tablet (`readAt`).
+      match /messages/{messageId} {
+        allow read: if canAccessDevice(deviceId);
+
+        allow create: if isDeviceAdmin(deviceId)
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 4000;
+
+        allow update: if isDeviceSelf(deviceId);
+
+        allow delete: if false;
       }
     }
 

@@ -187,6 +187,20 @@ button.danger {
   font-size: 0.95rem;
 }
 
+.list li.contact-row.emergency {
+  border-left: 3px solid #f87171;
+  padding-left: 10px;
+}
+
+.inline-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #a3a3a3;
+}
+
 .device-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

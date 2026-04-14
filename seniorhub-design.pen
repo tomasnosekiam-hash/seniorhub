@@ -1,0 +1,1006 @@
+{
+  "version": "2.10",
+  "children": [
+    {
+      "type": "frame",
+      "id": "bi8Au",
+      "x": 0,
+      "y": 0,
+      "name": "SeniorHub UI inventář",
+      "width": 2480,
+      "height": 2220,
+      "fill": "#E4E4E7",
+      "layout": "none",
+      "children": [
+        {
+          "type": "text",
+          "id": "boiy1",
+          "x": 32,
+          "y": 20,
+          "name": "title",
+          "fill": "#18181B",
+          "content": "SeniorHub — obrazovky v aktuálním kódu",
+          "fontFamily": "Inter",
+          "fontSize": 24,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "ug7he",
+          "x": 32,
+          "y": 52,
+          "name": "sub",
+          "fill": "#52525B",
+          "textGrowth": "fixed-width",
+          "width": 2200,
+          "content": "Web = Vite + vanilla TS + CSS. Android = Jetpack Compose + Material 3. Jedna APK pro tablet i telefon — oddělený admin flow v kódu zatím není.",
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "mcIrI",
+          "x": 40,
+          "y": 84,
+          "name": "hWeb",
+          "fill": "#1D4ED8",
+          "content": "① Web (správce / rodina)",
+          "fontFamily": "Inter",
+          "fontSize": 15,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "f8l46",
+          "x": 980,
+          "y": 84,
+          "name": "hTab",
+          "fill": "#047857",
+          "content": "② Android tablet — režim senior / kiosk",
+          "fontFamily": "Inter",
+          "fontSize": 15,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "OoVNI",
+          "x": 1980,
+          "y": 84,
+          "name": "hMob",
+          "fill": "#C2410C",
+          "content": "③ Android telefon — stejná app (admin UI není samostatné)",
+          "fontFamily": "Inter",
+          "fontSize": 15,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "EAGFk",
+          "x": 40,
+          "y": 112,
+          "name": "Web — jedna scrollovací stránka po přihlášení",
+          "width": 880,
+          "height": 1880,
+          "fill": "#0A0A0A",
+          "cornerRadius": 12,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#27272A"
+          },
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "dk3cc",
+              "name": "webHdr",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZyWsL",
+                  "name": "wh1",
+                  "fill": "#FAFAFA",
+                  "content": "SeniorHub admin",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "kqWMX",
+                  "name": "wh2",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Viuye",
+                      "name": "wpill",
+                      "fill": "#14532D",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "uykcR",
+                          "fill": "#BBF7D0",
+                          "content": "Firebase · online",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BzQk2",
+                  "name": "wbAuth",
+                  "fill": "#FACC15",
+                  "cornerRadius": 10,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "#EAB308"
+                  },
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EduPv",
+                      "fill": "#000000",
+                      "content": "Přihlásit / Odhlásit",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wIJjB",
+              "name": "Karta: Přístup",
+              "width": "fill_container",
+              "fill": "#171717",
+              "cornerRadius": 14,
+              "stroke": {
+                "thickness": 1,
+                "fill": "#262626"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "tNQBP",
+                  "fill": "#F5F5F5",
+                  "content": "Přístup",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "i2efR",
+                  "fill": "#A3A3A3",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Čekám na přihlášení… / Přihlášen: …",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pt3sq",
+              "name": "Karta: Přidat tablet",
+              "width": "fill_container",
+              "fill": "#171717",
+              "cornerRadius": 14,
+              "stroke": {
+                "thickness": 1,
+                "fill": "#262626"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "8UrEi",
+                  "fill": "#F5F5F5",
+                  "content": "Přidat tablet",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "xzLen",
+                  "fill": "#A3A3A3",
+                  "content": "Input kód + Spárovat",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZkrM5",
+              "name": "Karta: Moje tablety",
+              "width": "fill_container",
+              "fill": "#171717",
+              "cornerRadius": 14,
+              "stroke": {
+                "thickness": 1,
+                "fill": "#262626"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VowJq",
+                  "fill": "#F5F5F5",
+                  "content": "Moje tablety",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "dfUei",
+                  "name": "chipRow",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "kLLhc",
+                      "name": "chip1",
+                      "fill": "#111111",
+                      "cornerRadius": 10,
+                      "stroke": {
+                        "thickness": 2,
+                        "fill": "#FACC15"
+                      },
+                      "layout": "vertical",
+                      "gap": 4,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "kyaSo",
+                          "fill": "#FAFAFA",
+                          "textGrowth": "fixed-width",
+                          "width": 200,
+                          "content": "Babička — obývák (aktivní)",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "vGv2r",
+                          "fill": "#A3A3A3",
+                          "textGrowth": "fixed-width",
+                          "width": 200,
+                          "content": "tablet-… · role · baterie / kontakt",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VkbfP",
+                      "name": "chip2",
+                      "fill": "#111111",
+                      "cornerRadius": 10,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "#404040"
+                      },
+                      "layout": "vertical",
+                      "gap": 4,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "GJhiK",
+                          "fill": "#FAFAFA",
+                          "content": "Druhý tablet",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "JeE58",
+              "name": "Karta: Nastavení + PIN + profil",
+              "width": "fill_container",
+              "fill": "#171717",
+              "cornerRadius": 14,
+              "stroke": {
+                "thickness": 1,
+                "fill": "#262626"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "EDh6A",
+                  "fill": "#F5F5F5",
+                  "content": "Nastavení tabletu",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "tvD8U",
+                  "fill": "#A3A3A3",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Popisek · slider hlasitosti · hláška na celou obrazovku",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "1ldtY",
+                  "fill": "#D4D4D4",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Admin PIN (4) · SIM · jméno asistenta · jméno/adresa seniora",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Q1qfw",
+              "name": "Karta: Kontakty",
+              "width": "fill_container",
+              "fill": "#171717",
+              "cornerRadius": 14,
+              "stroke": {
+                "thickness": 1,
+                "fill": "#262626"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "kvU6m",
+                  "fill": "#F5F5F5",
+                  "content": "Kontakty na tabletu",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "usHgH",
+                  "fill": "#A3A3A3",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Seznam řádků + checkbox Nouze + přidat kontakt",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "mAFJD",
+              "name": "Karta: Vzkazy",
+              "width": "fill_container",
+              "fill": "#171717",
+              "cornerRadius": 14,
+              "stroke": {
+                "thickness": 1,
+                "fill": "#262626"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ljGIW",
+                  "fill": "#F5F5F5",
+                  "content": "Vzkazy na tablet",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "Rnlx2",
+                  "fill": "#A3A3A3",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Textarea + Odeslat + historie (odeslil / přečteno)",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "bz6CA",
+          "x": 980,
+          "y": 112,
+          "name": "Tablet — hlavní obrazovka (landscape)",
+          "width": 880,
+          "height": 420,
+          "fill": "#000000",
+          "stroke": {
+            "thickness": 1,
+            "fill": "#525252"
+          },
+          "gap": 20,
+          "padding": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "2QzXA",
+              "name": "L",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "jCY4i",
+                  "fill": "#FFFFFF",
+                  "content": "14:32",
+                  "fontFamily": "Inter",
+                  "fontSize": 52,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "yMVnS",
+                  "fill": "#FACC15",
+                  "content": "Tablet · popisek",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "npsxr",
+                  "fill": "#D4D4D4",
+                  "textGrowth": "fixed-width",
+                  "width": 300,
+                  "content": "Senior, adresa, ID, hlasitost, baterie…",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "1bY1y",
+                  "name": "pc",
+                  "fill": "#111111",
+                  "cornerRadius": 4,
+                  "stroke": {
+                    "thickness": 1,
+                    "fill": "#404040"
+                  },
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "sGBZA",
+                      "fill": "#FACC15",
+                      "content": "Karta párování / správci",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "283Ig",
+              "name": "R",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "cVDU6",
+                  "fill": "#FACC15",
+                  "content": "Kontakty",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "DBdHE",
+                  "name": "row1",
+                  "fill": "#111111",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QjjRn",
+                      "fill": "#FFFFFF",
+                      "content": "Jana · +420 …",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "CIzBD",
+                      "name": "btns",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "ExUPR",
+                          "name": "b1",
+                          "fill": "#2A2A2A",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            14
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "7ucMk",
+                              "fill": "#FACC15",
+                              "content": "Zavolat",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "kpml1",
+                          "name": "b2",
+                          "fill": "#2A2A2A",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            14
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "9bE5K",
+                              "fill": "#FACC15",
+                              "content": "SMS",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FRPPs",
+          "x": 980,
+          "y": 548,
+          "name": "Tablet — překryv: párování kódem",
+          "width": 420,
+          "height": 360,
+          "fill": "#050505",
+          "cornerRadius": 8,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#FACC15"
+          },
+          "layout": "vertical",
+          "gap": 10,
+          "padding": 20,
+          "children": [
+            {
+              "type": "text",
+              "id": "6qTaD",
+              "fill": "#FACC15",
+              "content": "Spáruj tablet s webem",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "qPL9w",
+              "fill": "#D4D4D4",
+              "textGrowth": "fixed-width",
+              "width": 360,
+              "content": "Kód + platnost + Obnovit kód",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tK9Tm",
+          "x": 1420,
+          "y": 548,
+          "name": "Tablet — překryv: nepřečtený vzkaz",
+          "width": 420,
+          "height": 360,
+          "fill": "#0D3320",
+          "cornerRadius": 8,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#22C55E"
+          },
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 20,
+          "children": [
+            {
+              "type": "text",
+              "id": "CqZ1s",
+              "fill": "#86EFAC",
+              "content": "Vzkaz od rodiny",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "WlUW9",
+              "fill": "#FFFFFF",
+              "textGrowth": "fixed-width",
+              "width": 360,
+              "content": "Text vzkazu…",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "SvnLR",
+              "fill": "#22C55E",
+              "content": "[ Přečetl jsem ]",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "PVxMy",
+          "x": 980,
+          "y": 924,
+          "name": "Tablet — překryv: správcovský PIN (kiosk)",
+          "width": 420,
+          "height": 380,
+          "fill": "#111111",
+          "cornerRadius": 8,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#FACC15"
+          },
+          "layout": "vertical",
+          "gap": 10,
+          "padding": 20,
+          "children": [
+            {
+              "type": "text",
+              "id": "IXAL1",
+              "fill": "#FACC15",
+              "content": "Správcovský PIN",
+              "fontFamily": "Inter",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "0ZRZo",
+              "fill": "#A3A3A3",
+              "content": "Číselník 0–9 · Otevřít nastavení",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tADU1",
+          "x": 1420,
+          "y": 924,
+          "name": "Tablet — překryv: psaní SMS",
+          "width": 420,
+          "height": 380,
+          "fill": "#111111",
+          "cornerRadius": 8,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#FACC15"
+          },
+          "layout": "vertical",
+          "gap": 10,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "PFIwU",
+              "fill": "#FACC15",
+              "content": "SMS pro …",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "9L4jR",
+              "fill": "#D4D4D4",
+              "content": "Pole textu · Zrušit / Odeslat",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "f7I1w",
+          "x": 980,
+          "y": 1324,
+          "name": "Tablet — překryv: hláška (alert)",
+          "width": 880,
+          "height": 200,
+          "fill": "#330000",
+          "cornerRadius": 8,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#F87171"
+          },
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 20,
+          "children": [
+            {
+              "type": "text",
+              "id": "oBVIF",
+              "fill": "#FFFFFF",
+              "content": "Hláška na celou obrazovku (z webu)",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "OG5Wg",
+              "fill": "#FCA5A5",
+              "content": "[ Rozumím ]",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "CY5Vu",
+          "x": 1980,
+          "y": 112,
+          "name": "Mobil — stejná aplikace (zatím bez samostatného admin UI)",
+          "width": 400,
+          "height": 720,
+          "fill": "#0A0A0A",
+          "cornerRadius": 12,
+          "stroke": {
+            "thickness": 2,
+            "fill": "#F59E0B"
+          },
+          "layout": "vertical",
+          "gap": 14,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "UDVtA",
+              "fill": "#FBBF24",
+              "textGrowth": "fixed-width",
+              "width": 360,
+              "content": "V kódu není samostatný navigační strom pro admin — jedna HomeScreen.",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "IQkgt",
+              "fill": "#A8A29E",
+              "textGrowth": "fixed-width",
+              "width": 360,
+              "content": "Do budoucna: přepínač zařízení, portrét, bez Matěje.",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "YEvd2",
+              "fill": "#57534E",
+              "content": "── náhled stejného obsahu ve sloupci ──",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "UWYFS",
+              "name": "mStack",
+              "width": "fill_container",
+              "fill": "#000000",
+              "stroke": {
+                "thickness": 1,
+                "fill": "#333"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "DvR81",
+                  "fill": "#FFF",
+                  "content": "14:32 · popisek tabletu",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "lrT1c",
+                  "fill": "#D4D4D4",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Kontakty (scroll) · Zavolat / SMS",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "EQ11l",
+          "x": 980,
+          "y": 1540,
+          "name": "Tablet — stav načítání",
+          "width": 880,
+          "height": 72,
+          "fill": "#000000",
+          "cornerRadius": 6,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#404040"
+          },
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "SebJ9",
+              "fill": "#FACC15",
+              "content": "◌ Načítání (Compose CircularProgressIndicator, žlutá)",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "hpUYt",
+          "x": 40,
+          "y": 2004,
+          "name": "Web — chybí VITE konfigurace",
+          "width": 880,
+          "height": 88,
+          "fill": "#422006",
+          "cornerRadius": 10,
+          "stroke": {
+            "thickness": 1,
+            "fill": "#854D0E"
+          },
+          "layout": "vertical",
+          "gap": 6,
+          "padding": 14,
+          "children": [
+            {
+              "type": "text",
+              "id": "1AzoA",
+              "fill": "#FEF9C3",
+              "textGrowth": "fixed-width",
+              "width": 820,
+              "content": "Stav při chybějícím .env — pouze hláška + návod zkopírovat z konzole",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "wXEIQ",
+          "x": 32,
+          "y": 2110,
+          "name": "foot",
+          "fill": "#71717A",
+          "textGrowth": "fixed-width",
+          "width": 2360,
+          "content": "Poznámky k implementaci: skrytá zóna 100×100 px vlevo nahoře (5× tap → PIN). SMS/Hovor: runtime oprávnění. FCM doručí notifikaci; nepřečtený vzkaz i přes Firestore snapshot.",
+          "fontFamily": "Inter",
+          "fontSize": 11,
+          "fontWeight": "normal"
+        }
+      ]
+    }
+  ]
+}
