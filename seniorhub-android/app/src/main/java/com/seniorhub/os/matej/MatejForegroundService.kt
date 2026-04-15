@@ -1,5 +1,6 @@
 package com.seniorhub.os.matej
 
+import android.Manifest
 import android.app.Notification
 import android.app.Service
 import android.content.Intent
@@ -24,6 +25,10 @@ import com.seniorhub.os.SeniorHubApp
 import com.seniorhub.os.data.Contact
 import com.seniorhub.os.data.DeviceConfig
 import com.seniorhub.os.data.MvpRepository
+import com.seniorhub.os.data.OpenMeteoWeather
+import com.seniorhub.os.util.CellularSmsCapability
+import com.seniorhub.os.util.normalizePhoneForDial
+import com.seniorhub.os.util.SmsSender
 import com.seniorhub.os.util.startOutgoingCall
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +45,8 @@ import kotlin.coroutines.resume
 
 /**
  * Modul Matěj (jen Senior): foreground service, wake word (Porcupine pokud je v `local.properties`
- * klíč `picovoice.access.key`, jinak STT), nouzové vytočení, zápis `incidents` + TTS.
+ * klíč `picovoice.access.key`, jinak STT), po probuzení krátký příkaz (počasí, vzkaz, SMS, hovor, nouze),
+ * zápis `incidents` jen u nouzové větve + TTS.
  */
 class MatejForegroundService : Service(), TextToSpeech.OnInitListener {
 
@@ -65,6 +71,21 @@ class MatejForegroundService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (BuildConfig.DEBUG && intent?.action == ACTION_TEST_EMERGENCY) {
+            val n = buildNotification()
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    n,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                startForeground(NOTIFICATION_ID, n)
+            }
+            mainHandler.post { runEmergencySequence() }
+            return START_STICKY
+        }
         if (intent?.action == ACTION_UPDATE) {
             applyUpdate(intent)
         }
@@ -121,9 +142,7 @@ class MatejForegroundService : Service(), TextToSpeech.OnInitListener {
                 }
                 val heard = listenForWakeHybrid(snap.assistantName)
                 if (heard) {
-                    withContext(Dispatchers.Main) {
-                        runEmergencySequence()
-                    }
+                    handlePostWake()
                     delay(WAKE_COOLDOWN_MS)
                 } else {
                     delay(LISTEN_GAP_MS)
@@ -178,17 +197,192 @@ class MatejForegroundService : Service(), TextToSpeech.OnInitListener {
                     override fun onEvent(eventType: Int, params: Bundle?) {}
                 }
                 recognizer.setRecognitionListener(listener)
-                val listenIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(
-                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
-                    )
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "cs-CZ")
-                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                }
-                recognizer.startListening(listenIntent)
+                recognizer.startListening(csRecognizeSpeechIntent(partialResults = true, prompt = null))
             }
         }
+
+    /**
+     * Jedno rozpoznání řeči (cs-CZ). [prompt] se předá do systému jako [RecognizerIntent.EXTRA_PROMPT] (např. diktát SMS).
+     */
+    private suspend fun listenForCommandOnce(prompt: String? = null): String =
+        withContext(Dispatchers.Main) {
+            if (!SpeechRecognizer.isRecognitionAvailable(this@MatejForegroundService)) {
+                return@withContext ""
+            }
+            suspendCancellableCoroutine { cont ->
+                val recognizer = SpeechRecognizer.createSpeechRecognizer(this@MatejForegroundService)
+                cont.invokeOnCancellation { recognizer.destroy() }
+                val listener = object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {}
+                    override fun onBeginningOfSpeech() {}
+                    override fun onRmsChanged(rmsdB: Float) {}
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+                    override fun onEndOfSpeech() {}
+                    override fun onError(error: Int) {
+                        recognizer.destroy()
+                        if (cont.isActive) cont.resume("")
+                    }
+
+                    override fun onResults(results: Bundle?) {
+                        val text =
+                            results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                                ?.firstOrNull().orEmpty()
+                        recognizer.destroy()
+                        if (cont.isActive) cont.resume(text.trim())
+                    }
+
+                    override fun onPartialResults(partialResults: Bundle?) {}
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                }
+                recognizer.setRecognitionListener(listener)
+                recognizer.startListening(csRecognizeSpeechIntent(partialResults = false, prompt = prompt))
+            }
+        }
+
+    private fun csRecognizeSpeechIntent(partialResults: Boolean, prompt: String?): Intent =
+        Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "cs-CZ")
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, partialResults)
+            if (!prompt.isNullOrBlank()) {
+                putExtra(RecognizerIntent.EXTRA_PROMPT, prompt)
+            }
+        }
+
+    private suspend fun handlePostWake() {
+        val snap = snapshot.get()
+        val transcript = listenForCommandOnce()
+        when (val action = classifyPostWakeCommand(transcript, snap.contacts)) {
+            MatejPostWakeAction.Weather -> runWeatherSkill()
+            MatejPostWakeAction.ReadFamilyMessage -> runReadFamilyMessage()
+            is MatejPostWakeAction.SendSms -> runSendSmsFlow(action.contact)
+            MatejPostWakeAction.SmsNeedRecipient -> withContext(Dispatchers.Main) {
+                speakTts(getString(R.string.matej_tts_sms_who), "matej_hint")
+            }
+            MatejPostWakeAction.DialNeedContact -> withContext(Dispatchers.Main) {
+                speakTts(getString(R.string.matej_tts_dial_who), "matej_hint")
+            }
+            is MatejPostWakeAction.DialContact -> withContext(Dispatchers.Main) {
+                runDialContact(action.contact)
+            }
+            MatejPostWakeAction.Emergency -> withContext(Dispatchers.Main) {
+                runEmergencySequence()
+            }
+        }
+    }
+
+    private fun matejRepositoryOrNull(): MvpRepository? {
+        val deviceId = snapshot.get().deviceId.trim()
+        if (deviceId.isEmpty()) return null
+        return MvpRepository(
+            FirebaseFirestore.getInstance(),
+            FirebaseAuth.getInstance(),
+            deviceId,
+        )
+    }
+
+    private suspend fun runReadFamilyMessage() {
+        val repo = matejRepositoryOrNull()
+        if (repo == null) {
+            withContext(Dispatchers.Main) {
+                speakTts(getString(R.string.matej_tts_read_fail), "matej_read")
+            }
+            return
+        }
+        val msgResult = withContext(Dispatchers.IO) {
+            runCatching { repo.fetchFirstUnreadFamilyMessage() }
+        }
+        if (msgResult.isFailure) {
+            withContext(Dispatchers.Main) {
+                speakTts(getString(R.string.matej_tts_read_fail), "matej_read")
+            }
+            return
+        }
+        val msg = msgResult.getOrNull()
+        if (msg == null) {
+            withContext(Dispatchers.Main) {
+                speakTts(getString(R.string.matej_tts_no_unread), "matej_read")
+            }
+            return
+        }
+        val who = msg.senderDisplayName?.trim()?.takeIf { it.isNotEmpty() } ?: "Rodina"
+        withContext(Dispatchers.Main) {
+            speakTts(getString(R.string.matej_tts_read_message, who, msg.body), "matej_read")
+        }
+        ioScope.launch {
+            runCatching { repo.markMessageRead(msg.id) }
+        }
+    }
+
+    private suspend fun runSendSmsFlow(contact: Contact) {
+        val body = listenForCommandOnce(getString(R.string.matej_stt_prompt_sms_body))
+        if (body.isBlank()) {
+            withContext(Dispatchers.Main) {
+                speakTts(getString(R.string.matej_tts_sms_no_body), "matej_sms")
+            }
+            return
+        }
+        val repo = matejRepositoryOrNull()
+        if (repo == null) {
+            withContext(Dispatchers.Main) {
+                speakTts(getString(R.string.matej_tts_sms_fail), "matej_sms")
+            }
+            return
+        }
+        val ctx = applicationContext
+        val useCell = CellularSmsCapability.canSendCellularSms(ctx)
+        val hasSend =
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.SEND_SMS) ==
+                PackageManager.PERMISSION_GRANTED
+        val sendResult = withContext(Dispatchers.IO) {
+            runCatching {
+                when {
+                    useCell && hasSend -> {
+                        SmsSender.send(ctx, contact.phone, body).getOrThrow()
+                        repo.recordOutboundCellularSms(contact, body)
+                    }
+                    else -> repo.sendTabletFirestoreMessage(contact, body)
+                }
+            }
+        }
+        withContext(Dispatchers.Main) {
+            sendResult.fold(
+                onSuccess = {
+                    speakTts(
+                        getString(R.string.matej_tts_sms_ok, contact.name.trim()),
+                        "matej_sms",
+                    )
+                },
+                onFailure = {
+                    speakTts(getString(R.string.matej_tts_sms_fail), "matej_sms")
+                },
+            )
+        }
+    }
+
+    private suspend fun runWeatherSkill() {
+        val line = withContext(Dispatchers.IO) {
+            OpenMeteoWeather.fetchCurrentSummary().getOrNull()
+        }
+        val msg = line ?: getString(R.string.matej_tts_weather_error)
+        withContext(Dispatchers.Main) {
+            speakTts(msg, "matej_weather")
+        }
+    }
+
+    private fun runDialContact(contact: Contact) {
+        if (normalizePhoneForDial(contact.phone) == null) {
+            runEmergencySequence()
+            return
+        }
+        startOutgoingCall(contact.phone)
+        mainHandler.postDelayed({
+            speakTts(
+                getString(R.string.matej_tts_dial_named, contact.name.trim()),
+                "matej_dial",
+            )
+        }, 600L)
+    }
 
     private fun runEmergencySequence() {
         val snap = snapshot.get()
@@ -213,19 +407,23 @@ class MatejForegroundService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun speakEmergencyTts(snap: MatejSnapshot) {
-        if (!ttsReady) return
-        val engine = tts ?: return
         val first = snap.seniorFirstName.trim()
         val msg = if (first.isNotEmpty()) {
             getString(R.string.matej_tts_emergency_named, first)
         } else {
             getString(R.string.matej_tts_emergency_generic)
         }
+        speakTts(msg, "matej_emergency")
+    }
+
+    private fun speakTts(message: String, utteranceId: String) {
+        if (!ttsReady) return
+        val engine = tts ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            engine.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "matej_emergency")
+            engine.speak(message, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
         } else {
             @Suppress("DEPRECATION")
-            engine.speak(msg, TextToSpeech.QUEUE_FLUSH, null)
+            engine.speak(message, TextToSpeech.QUEUE_FLUSH, null)
         }
     }
 
@@ -272,6 +470,20 @@ class MatejForegroundService : Service(), TextToSpeech.OnInitListener {
         private const val TTS_AFTER_DIAL_DELAY_MS = 2200L
 
         const val ACTION_UPDATE = "com.seniorhub.os.matej.ACTION_UPDATE"
+        /** Pouze debug build — spustí stejnou nouzovou sekvenci jako po probuzení (bez wake word). */
+        const val ACTION_TEST_EMERGENCY = "com.seniorhub.os.matej.ACTION_TEST_EMERGENCY"
+
+        /**
+         * Debug: okamžitě provede nouzové vytočení + incident podle aktuálního snapshotu služby.
+         * Vyžaduje běžící sync z dashboardu (spárované zařízení) a platný cíl (nouzový kontakt / SIM).
+         */
+        fun triggerTestEmergency(context: android.content.Context) {
+            if (!BuildConfig.DEBUG) return
+            val i = Intent(context, MatejForegroundService::class.java).apply {
+                action = ACTION_TEST_EMERGENCY
+            }
+            ContextCompat.startForegroundService(context, i)
+        }
         private const val EXTRA_ASSISTANT = "assistant"
         private const val EXTRA_SENIOR_FIRST = "senior_first"
         private const val EXTRA_FALLBACK_SIM = "fallback_sim"

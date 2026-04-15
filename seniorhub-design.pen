@@ -5610,8 +5610,8 @@
     {
       "type": "frame",
       "id": "fGJNC",
-      "x": 2227,
-      "y": 3697,
+      "x": 2269,
+      "y": 3698,
       "name": "Frame 1",
       "clip": true,
       "width": 800,
@@ -5628,37 +5628,51 @@
           "clip": true,
           "width": 529,
           "height": 324,
+          "cornerRadius": 52,
           "stroke": {
             "align": "inside",
-            "thickness": 1,
-            "fill": "#2d2a36ff"
+            "thickness": 1
           },
           "layout": "vertical",
+          "gap": 30,
           "justifyContent": "center",
           "alignItems": "center",
           "children": [
             {
-              "type": "text",
-              "id": "kgu6Q",
-              "fill": "#e0daefff",
-              "content": "Vítejte Heleno",
-              "textAlign": "center",
-              "textAlignVertical": "middle",
-              "fontFamily": "Google Sans",
-              "fontSize": 47,
-              "letterSpacing": -1.41
-            },
-            {
-              "type": "text",
-              "id": "ZOavk",
-              "fill": "#878098ff",
-              "textGrowth": "fixed-width",
-              "width": 218,
-              "content": "Děkujeme za důvěru a nákup našeho Hubu. Užijte si ho.",
-              "textAlign": "center",
-              "textAlignVertical": "middle",
-              "fontFamily": "Google Sans",
-              "fontSize": 14
+              "type": "frame",
+              "id": "J7LUO",
+              "name": "Frame 4",
+              "clip": true,
+              "width": "fill_container",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "kgu6Q",
+                  "fill": "#e0daefff",
+                  "content": "Vítejte Heleno",
+                  "textAlign": "center",
+                  "textAlignVertical": "middle",
+                  "fontFamily": "Google Sans",
+                  "fontSize": 47,
+                  "fontWeight": "normal",
+                  "letterSpacing": -1.41
+                },
+                {
+                  "type": "text",
+                  "id": "ZOavk",
+                  "fill": "#878098ff",
+                  "textGrowth": "fixed-width",
+                  "width": 218,
+                  "content": "Děkujeme za důvěru a nákup našeho Hubu. Užijte si ho.",
+                  "textAlign": "center",
+                  "textAlignVertical": "middle",
+                  "fontFamily": "Google Sans",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
             },
             {
               "type": "frame",
@@ -5683,7 +5697,7 @@
                   "textAlignVertical": "middle",
                   "fontFamily": "Google Sans",
                   "fontSize": 14,
-                  "fontWeight": "normal"
+                  "fontWeight": "500"
                 }
               ]
             }
@@ -5714,6 +5728,104 @@
       "fontSize": 47,
       "fontWeight": "500",
       "letterSpacing": -2.35
+    },
+    {
+      "type": "frame",
+      "id": "2ir5W",
+      "x": 3254,
+      "y": 3698,
+      "name": "Frame 1",
+      "clip": true,
+      "width": 800,
+      "height": 480,
+      "fill": "#0f0d14ff",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "HV3tW",
+          "x": 135.5,
+          "y": 77.5,
+          "name": "Frame 3",
+          "clip": true,
+          "width": 529,
+          "height": 324,
+          "cornerRadius": 52,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "layout": "vertical",
+          "gap": 30,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "WUVLq",
+              "name": "Frame 4",
+              "clip": true,
+              "width": "fill_container",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "tLkzJ",
+                  "fill": "#e0daefff",
+                  "content": "Vítejte Heleno",
+                  "textAlign": "center",
+                  "textAlignVertical": "middle",
+                  "fontFamily": "Google Sans",
+                  "fontSize": 47,
+                  "fontWeight": "normal",
+                  "letterSpacing": -1.41
+                },
+                {
+                  "type": "text",
+                  "id": "SkNPz",
+                  "fill": "#878098ff",
+                  "textGrowth": "fixed-width",
+                  "width": 218,
+                  "content": "Děkujeme za důvěru a nákup našeho Hubu. Užijte si ho.",
+                  "textAlign": "center",
+                  "textAlignVertical": "middle",
+                  "fontFamily": "Google Sans",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "95W3Q",
+              "name": "Frame 2",
+              "height": 48,
+              "fill": "#e0daefff",
+              "cornerRadius": 507,
+              "padding": [
+                0,
+                24
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "A7cJm",
+                  "fill": "#0f0d14ff",
+                  "content": "Začít používat",
+                  "textAlign": "center",
+                  "textAlignVertical": "middle",
+                  "fontFamily": "Google Sans",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "fonts": [

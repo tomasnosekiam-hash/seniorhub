@@ -12,7 +12,19 @@
     <string name="notification_channel_emergency_name">Nouzové volání (Matěj)</string>
     <string name="notification_channel_emergency_desc">Upozornění, když senior spustí nouzovou sekvenci přes asistenta Matěje</string>
     <string name="matej_notification_title">Matěj</string>
-    <string name="matej_notification_text">Naslouchání… řekněte jméno asistenta (např. Matěji).</string>
+    <string name="matej_notification_text">Po oslovení: počasí, přečti vzkaz, SMS jméno, zavolej jméno, nebo nic pro nouzi.</string>
     <string name="matej_tts_emergency_generic">Volám nouzový kontakt. Senior potřebuje pomoc.</string>
     <string name="matej_tts_emergency_named">Volám nouzový kontakt. %1$s potřebuje pomoc.</string>
+    <string name="matej_tts_weather_error">Nepodařilo se načíst počasí. Zkuste to znovu za chvíli.</string>
+    <string name="matej_tts_dial_named">Volám kontakt %1$s.</string>
+    <string name="matej_tts_no_unread">Nemáte žádný nepřečtený vzkaz od rodiny.</string>
+    <string name="matej_tts_read_message">Vzkaz od %1$s: %2$s</string>
+    <string name="matej_tts_read_fail">Vzkazy se teď nepodařilo načíst.</string>
+    <string name="matej_tts_sms_no_body">Nerozuměl jsem text zprávy. Řekněte znovu, co mám napsat.</string>
+    <string name="matej_tts_sms_ok">Zpráva pro kontakt %1$s je odeslána.</string>
+    <string name="matej_tts_sms_fail">Odeslání zprávy se nepodařilo.</string>
+    <string name="matej_tts_sms_who">Řekněte jméno kontaktu a zopakujte příkaz.</string>
+    <string name="matej_tts_dial_who">Kontakt se nepodařilo najít. Zkuste celé jméno.</string>
+    <!-- Systémový hint u STT (diktát SMS) — viditelný v dialogu rozpoznávání -->
+    <string name="matej_stt_prompt_sms_body">Řekněte text zprávy</string>
 </resources>

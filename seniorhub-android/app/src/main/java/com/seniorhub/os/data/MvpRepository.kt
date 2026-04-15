@@ -3,6 +3,7 @@ package com.seniorhub.os.data
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.seniorhub.os.util.normalizePhoneForDial
@@ -194,26 +195,7 @@ class MvpRepository(
                     error != null -> trySend(Result.failure(error))
                     snapshot == null -> trySend(Result.success(emptyList()))
                     else -> {
-                        val list = snapshot.documents.map { doc ->
-                            DeviceMessage(
-                                id = doc.id,
-                                body = doc.getString(KEY_BODY)?.trim().orEmpty(),
-                                createdAt = doc.getTimestamp(KEY_CREATED_AT),
-                                readAt = doc.getTimestamp(KEY_READ_AT),
-                                senderDisplayName = doc.getString(KEY_SENDER_DISPLAY_NAME)?.trim()
-                                    ?.takeIf { it.isNotEmpty() },
-                                delivery = doc.getString(KEY_DELIVERY)?.trim().orEmpty()
-                                    .ifEmpty { null },
-                                outboundPhone = doc.getString(KEY_OUTBOUND_PHONE)?.trim().orEmpty()
-                                    .ifEmpty { null },
-                                outboundName = doc.getString(KEY_OUTBOUND_NAME)?.trim().orEmpty()
-                                    .ifEmpty { null },
-                                inboundFromPhone = doc.getString(KEY_INBOUND_FROM_PHONE)?.trim().orEmpty()
-                                    .ifEmpty { null },
-                                inboundFromName = doc.getString(KEY_INBOUND_FROM_NAME)?.trim().orEmpty()
-                                    .ifEmpty { null },
-                            )
-                        }
+                        val list = snapshot.documents.map { doc -> deviceMessageFromDoc(doc) }
                         trySend(Result.success(list))
                     }
                 }
@@ -227,6 +209,47 @@ class MvpRepository(
             mapOf(KEY_READ_AT to FieldValue.serverTimestamp()),
         ).await()
     }
+
+    /**
+     * Nepřečtený vzkaz od rodiny (bez `delivery` = ne odchozí SMS ani příchozí SMS zrcadlo).
+     * Nejnovější dle `createdAt`.
+     */
+    suspend fun fetchFirstUnreadFamilyMessage(): DeviceMessage? {
+        signInDevice()
+        val snapshot = deviceRef.collection(SUB_MESSAGES)
+            .orderBy(KEY_CREATED_AT, Query.Direction.DESCENDING)
+            .limit(50)
+            .get()
+            .await()
+        for (doc in snapshot.documents) {
+            val msg = deviceMessageFromDoc(doc)
+            if (msg.body.isBlank()) continue
+            if (!msg.delivery.isNullOrBlank()) continue
+            if (msg.readAt != null) continue
+            return msg
+        }
+        return null
+    }
+
+    private fun deviceMessageFromDoc(doc: DocumentSnapshot): DeviceMessage =
+        DeviceMessage(
+            id = doc.id,
+            body = doc.getString(KEY_BODY)?.trim().orEmpty(),
+            createdAt = doc.getTimestamp(KEY_CREATED_AT),
+            readAt = doc.getTimestamp(KEY_READ_AT),
+            senderDisplayName = doc.getString(KEY_SENDER_DISPLAY_NAME)?.trim()
+                ?.takeIf { it.isNotEmpty() },
+            delivery = doc.getString(KEY_DELIVERY)?.trim().orEmpty()
+                .ifEmpty { null },
+            outboundPhone = doc.getString(KEY_OUTBOUND_PHONE)?.trim().orEmpty()
+                .ifEmpty { null },
+            outboundName = doc.getString(KEY_OUTBOUND_NAME)?.trim().orEmpty()
+                .ifEmpty { null },
+            inboundFromPhone = doc.getString(KEY_INBOUND_FROM_PHONE)?.trim().orEmpty()
+                .ifEmpty { null },
+            inboundFromName = doc.getString(KEY_INBOUND_FROM_NAME)?.trim().orEmpty()
+                .ifEmpty { null },
+        )
 
     /**
      * Tablet bez klasické SMS: záznam do stejné kolekce jako vzkazy z webu — rodina ho uvidí ve webové administraci

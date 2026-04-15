@@ -10,8 +10,8 @@
 | Krok | Soubor (návrh) | Obsah |
 |------|----------------|--------|
 | 1 | `HomeRoute.kt` nebo ponechat v `HomeScreen.kt` nahoře | Jen `HomeRoute` — permission launchery, `MatejForegroundService.sync`, overlay stack (`ContactThreadOverlay`, `SmsComposeOverlay`). *Nejjednodušší první řez.* |
-| 2 | `HomeDashboard.kt` | `HomeScreen`, `StatusColumn`, `ContactsColumn`, `ContactRow`, `PairingSummaryCard` — hlavní rozložení dvou sloupců. |
-| 3 | `HomeOverlays.kt` | `ContactThreadOverlay`, `SmsComposeOverlay`, `MessageOverlay`, `AlertOverlay`, `KioskUnlockOverlay`, `PairingOverlay`, případně další modální UI ze spodní části souboru. |
+| 2 | `HomeDashboard.kt` | **Hotovo** — `HomeScreen`, `StatusColumn`, `ContactsColumn`, `ContactRow`, `PairingSummaryCard` + preview (`docs/changes/2026-04-19-android-home-dashboard-matej-debug-test.md`). |
+| 3 | `HomeOverlays.kt` | **Hotovo** (`docs/changes/2026-04-18-android-home-overlays-split.md`) — `ContactThreadOverlay`, `SmsComposeOverlay`, `MessageOverlay`, `AlertOverlay`, `KioskUnlockOverlay`, `PairingOverlay`. |
 | 4 | `KioskHomeEffects.kt` (volitelně) | `KioskPinningEffect` — životní cyklus + `KioskMode`, aby nepletl overlay logiku. |
 
 Pořadí lze upravit: někdo začne **overlayi** (izolované, málo stavu z route), jiný **sloupce** (vizuálně jasné).

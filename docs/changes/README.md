@@ -47,5 +47,13 @@ Každá významná etapa má vlastní soubor `YYYY-MM-DD-kratky-nazev.md`. **Akt
 | Soubor | Téma |
 |--------|------|
 | [`2026-04-18-home-screen-refactor-plan.md`](2026-04-18-home-screen-refactor-plan.md) | Rozdělení velkého `HomeScreen.kt` — navrhované soubory, pořadí kroků, testy |
+| [`2026-04-18-android-home-overlays-split.md`](2026-04-18-android-home-overlays-split.md) | Hotovo: overlaye přesunuty do `HomeOverlays.kt` |
+| [`2026-04-19-android-home-dashboard-matej-debug-test.md`](2026-04-19-android-home-dashboard-matej-debug-test.md) | `HomeDashboard.kt`; debug „Test nouze · DBG“ pro Matěje |
+
+## 2026-04-20
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-20-matej-postwake-skills-natural-speech-plan.md`](2026-04-20-matej-postwake-skills-natural-speech-plan.md) | Matěj: dovednosti po probuzení (počasí, vzkaz, SMS, hovor); STT prompt; plán vrstvy přirozené řeči (Nano / cloud / heuristiky) |
 
 Pro **nejnovější etapu** použij soubor s **nejvyšším datem** v názvu; při stejném datu rozhoduje čas poslední úpravy souboru (viz `PROJECT_CONTEXT.md`).
