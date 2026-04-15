@@ -29,11 +29,20 @@ class SeniorHubApp : Application() {
             }
             val nm = getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(channel)
+            val matej = NotificationChannel(
+                CHANNEL_ID_MATEJ,
+                getString(R.string.notification_channel_matej_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = getString(R.string.notification_channel_matej_desc)
+            }
+            nm.createNotificationChannel(matej)
         }
     }
 
     companion object {
         const val CHANNEL_ID_MESSAGES = "family_messages"
+        const val CHANNEL_ID_MATEJ = "matej_assistant"
     }
 }
 

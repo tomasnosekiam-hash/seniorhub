@@ -27,6 +27,18 @@ service cloud.firestore {
       return signedIn() && exists(deviceAdminPath(deviceId, request.auth.uid));
     }
 
+    /** Účet ve `deviceAdmins` s explicitním `role: viewer` — čte zařízení, nesmí měnit PIN/kontakty. */
+    function isDeviceViewer(deviceId) {
+      return isDeviceAdmin(deviceId)
+        && 'role' in get(deviceAdminPath(deviceId, request.auth.uid)).data
+        && get(deviceAdminPath(deviceId, request.auth.uid)).data.role == 'viewer';
+    }
+
+    /** Tablet nebo správce s rolí admin (ne čistý viewer). */
+    function canMutateAdminFields(deviceId) {
+      return isDeviceSelf(deviceId) || (isDeviceAdmin(deviceId) && !isDeviceViewer(deviceId));
+    }
+
     function canAccessDevice(deviceId) {
       return isDeviceSelf(deviceId) || isDeviceAdmin(deviceId);
     }
@@ -44,7 +56,7 @@ service cloud.firestore {
     // Zápis metadat zařízení: plný přístup NEBO „znovu navázání“ stejného fyzického tabletu
     // (musí zůstat deviceId v poli shodné s cestou a nové uid = přihlášený uživatel).
     function canWriteDeviceDoc(deviceId) {
-      return canAccessDevice(deviceId)
+      return canMutateAdminFields(deviceId)
         || (signedIn()
           && request.resource.data.keys().hasAll(['deviceId', 'deviceAuthUid'])
           && request.resource.data.deviceId == deviceId
@@ -74,23 +86,67 @@ service cloud.firestore {
       allow delete: if false;
 
       match /contacts/{contactId} {
-        allow read, write: if canAccessDevice(deviceId);
+        allow read: if canAccessDevice(deviceId);
+        allow write: if canMutateAdminFields(deviceId);
       }
 
       // Jednotný dokument nastavení (PIN správce, SIM, jméno asistenta) — viz PROJECT_CONTEXT / oldies_project.md
       match /config/{configDocId} {
-        allow read, write: if canAccessDevice(deviceId);
+        allow read: if canAccessDevice(deviceId);
+        allow write: if canMutateAdminFields(deviceId);
       }
 
-      // Vzkazy (web → tablet); přečtení zapisuje tablet (`readAt`).
-      match /messages/{messageId} {
+      // Vzkazy (web → tablet; tablet může zapsat náhradu za SMS nebo zrcadlo klasické SMS přes `delivery`).
+      // Rozšířený provozní stav (síť, zrcadlo heartbeatu) — zapisuje tablet.
+      match /status/{statusDocId} {
         allow read: if canAccessDevice(deviceId);
+        allow create, update: if isDeviceSelf(deviceId);
+        allow delete: if false;
+      }
 
-        allow create: if isDeviceAdmin(deviceId)
-          && request.resource.data.senderUid == request.auth.uid
+        // Incidenty z tabletu (Matěj / nouze) — zápis jen zařízením; čtení správce + tablet.
+        match /incidents/{incidentId} {
+          allow read: if canAccessDevice(deviceId);
+          allow create: if isDeviceSelf(deviceId)
+            && request.resource.data.source == 'matej_emergency'
+            && request.resource.data.dialedPhone is string
+            && request.resource.data.dialedPhone.size() > 0
+            && request.resource.data.dialedPhone.size() <= 40
+            && (!('dialedContactLabel' in request.resource.data)
+              || (request.resource.data.dialedContactLabel is string
+                && request.resource.data.dialedContactLabel.size() <= 120));
+          allow update, delete: if false;
+        }
+
+        match /messages/{messageId} {
+          allow read: if canAccessDevice(deviceId);
+
+          allow create: if request.resource.data.senderUid == request.auth.uid
           && request.resource.data.body is string
           && request.resource.data.body.size() > 0
-          && request.resource.data.body.size() <= 4000;
+          && request.resource.data.body.size() <= 4000
+          && request.resource.data.senderDisplayName is string
+          && request.resource.data.senderDisplayName.size() <= 200
+          && (
+            (isDeviceAdmin(deviceId) && !('delivery' in request.resource.data))
+            || (isDeviceSelf(deviceId)
+              && (request.resource.data.delivery == 'tablet_firestore'
+                || request.resource.data.delivery == 'sms_cellular')
+              && request.resource.data.outbound_phone is string
+              && request.resource.data.outbound_phone.size() > 0
+              && request.resource.data.outbound_phone.size() <= 40
+              && (!('outbound_name' in request.resource.data)
+                || (request.resource.data.outbound_name is string
+                  && request.resource.data.outbound_name.size() <= 120)))
+            || (isDeviceSelf(deviceId)
+              && request.resource.data.delivery == 'sms_inbound'
+              && request.resource.data.inbound_from_phone is string
+              && request.resource.data.inbound_from_phone.size() > 0
+              && request.resource.data.inbound_from_phone.size() <= 40
+              && (!('inbound_from_name' in request.resource.data)
+                || (request.resource.data.inbound_from_name is string
+                  && request.resource.data.inbound_from_name.size() <= 120)))
+          );
 
         allow update: if isDeviceSelf(deviceId);
 
@@ -143,6 +199,11 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
+
+      // FCM tokeny správců (Android / budoucí web push) — jen vlastní uid.
+      match /fcmTokens/{tokenDocId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
     }
   }
 }

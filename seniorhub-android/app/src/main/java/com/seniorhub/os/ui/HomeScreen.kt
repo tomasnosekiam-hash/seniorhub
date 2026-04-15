@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.provider.Settings
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -31,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,24 +44,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seniorhub.os.R
 import com.seniorhub.os.data.Contact
 import com.seniorhub.os.data.DeviceConfig
 import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
+import com.seniorhub.os.data.MvpRepository
 import com.seniorhub.os.ui.theme.SeniorHubTheme
+import com.seniorhub.os.util.CellularSmsCapability
 import com.seniorhub.os.util.SmsSender
+import com.seniorhub.os.matej.MatejForegroundService
+import com.seniorhub.os.util.KioskMode
+import com.seniorhub.os.util.belongsToContactThread
 import com.seniorhub.os.util.normalizePhoneForDial
 import com.seniorhub.os.util.openDialPad
 import com.seniorhub.os.util.startOutgoingCall
+import java.text.SimpleDateFormat
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun HomeRoute(
@@ -68,10 +82,37 @@ fun HomeRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val useCellularSms = remember(context) {
+        CellularSmsCapability.canSendCellularSms(context)
+    }
     var pendingCallPhone by remember { mutableStateOf<String?>(null) }
     var smsTarget by remember { mutableStateOf<Contact?>(null) }
+    var threadContact by remember { mutableStateOf<Contact?>(null) }
     var smsSendError by remember { mutableStateOf<String?>(null) }
     var pendingSms by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var isDefaultHomeApp by remember {
+        mutableStateOf(KioskMode.isOurPackageDefaultHome(context))
+    }
+    val showKioskLauncherHint = state.device?.paired == true && !isDefaultHomeApp
+    KioskPinningEffect(
+        paired = state.device?.paired == true,
+        onHomeStateRefresh = { isDefaultHomeApp = KioskMode.isOurPackageDefaultHome(context) },
+    )
+    LaunchedEffect(state.device?.paired, state.deviceConfig, state.contacts) {
+        val cfg = state.deviceConfig
+        val paired = state.device?.paired == true
+        val appCtx = context.applicationContext
+        if (paired && cfg != null) {
+            MatejForegroundService.sync(
+                appCtx,
+                cfg,
+                state.contacts,
+                state.device?.deviceId.orEmpty(),
+            )
+        } else {
+            MatejForegroundService.stop(appCtx)
+        }
+    }
     val callPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
     ) { granted ->
@@ -91,10 +132,29 @@ fun HomeRoute(
         pendingSms = null
         if (pending == null) return@rememberLauncherForActivityResult
         if (granted) {
-            SmsSender.send(context, pending.first, pending.second).fold(
+            val phone = pending.first
+            val body = pending.second
+            val targetContact = smsTarget
+            SmsSender.send(context, phone, body).fold(
                 onSuccess = {
-                    smsTarget = null
-                    smsSendError = null
+                    if (targetContact != null) {
+                        viewModel.recordOutboundCellularSms(targetContact, body) { result ->
+                            result.fold(
+                                onSuccess = {
+                                    smsTarget = null
+                                    smsSendError = null
+                                },
+                                onFailure = { e ->
+                                    smsSendError =
+                                        "SMS odeslána. Zápis do cloudu se nepodařil: ${e.message ?: e}"
+                                    smsTarget = null
+                                },
+                            )
+                        }
+                    } else {
+                        smsTarget = null
+                        smsSendError = null
+                    }
                 },
                 onFailure = { e ->
                     smsSendError = e.message ?: "Odeslání se nezdařilo."
@@ -116,6 +176,10 @@ fun HomeRoute(
             onDismissKioskUnlock = viewModel::dismissKioskUnlock,
             onSubmitKioskPin = { pin ->
                 if (viewModel.tryUnlockWithPin(pin)) {
+                    val act = context as? ComponentActivity
+                    if (act != null) {
+                        KioskMode.tryStopPinning(act)
+                    }
                     context.startActivity(
                         Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     )
@@ -137,11 +201,31 @@ fun HomeRoute(
                 smsSendError = null
                 smsTarget = contact
             },
+            onContactThread = { contact ->
+                threadContact = contact
+            },
+            showKioskLauncherHint = showKioskLauncherHint,
             modifier = Modifier.fillMaxSize(),
         )
+        threadContact?.let { tc ->
+            val threadMsgs = state.messages
+                .filter { it.belongsToContactThread(tc) }
+                .sortedBy { it.createdAt?.toDate()?.time ?: 0L }
+            ContactThreadOverlay(
+                contact = tc,
+                messages = threadMsgs,
+                onDismiss = { threadContact = null },
+                onReply = {
+                    threadContact = null
+                    smsSendError = null
+                    smsTarget = tc
+                },
+            )
+        }
         smsTarget?.let { contact ->
             SmsComposeOverlay(
                 contact = contact,
+                useCellularSms = useCellularSms,
                 errorMessage = smsSendError,
                 onDismiss = {
                     smsTarget = null
@@ -154,11 +238,36 @@ fun HomeRoute(
                         normalizePhoneForDial(contact.phone) == null -> {
                             smsSendError = "Neplatné telefonní číslo."
                         }
+                        !useCellularSms -> {
+                            viewModel.sendTabletFirestoreMessage(contact, body) { result ->
+                                result.fold(
+                                    onSuccess = {
+                                        smsTarget = null
+                                        smsSendError = null
+                                    },
+                                    onFailure = { e ->
+                                        smsSendError = e.message ?: "Odeslání se nezdařilo."
+                                    },
+                                )
+                            }
+                        }
                         ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) ==
                             PackageManager.PERMISSION_GRANTED -> {
                             SmsSender.send(context, contact.phone, body).fold(
                                 onSuccess = {
-                                    smsTarget = null
+                                    viewModel.recordOutboundCellularSms(contact, body) { result ->
+                                        result.fold(
+                                            onSuccess = {
+                                                smsTarget = null
+                                                smsSendError = null
+                                            },
+                                            onFailure = { e ->
+                                                smsSendError =
+                                                    "SMS odeslána. Zápis do cloudu se nepodařil: ${e.message ?: e}"
+                                                smsTarget = null
+                                            },
+                                        )
+                                    }
                                 },
                                 onFailure = { e ->
                                     smsSendError = e.message ?: "Odeslání se nezdařilo."
@@ -189,8 +298,16 @@ fun HomeScreen(
     onSubmitKioskPin: (String) -> Unit,
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
+    onContactThread: (Contact) -> Unit,
+    showKioskLauncherHint: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val familyMessagesPreview = remember(state.messages) {
+        state.messages
+            .filter { it.delivery.isNullOrBlank() }
+            .take(5)
+            .asReversed()
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -211,6 +328,9 @@ fun HomeScreen(
                 StatusColumn(
                     device = state.device,
                     deviceConfig = state.deviceConfig,
+                    weatherLine = state.weatherLine,
+                    familyMessages = familyMessagesPreview,
+                    showKioskLauncherHint = showKioskLauncherHint,
                     onShowPairing = onShowPairing,
                     modifier = Modifier
                         .weight(0.38f)
@@ -220,6 +340,7 @@ fun HomeScreen(
                     contacts = state.contacts,
                     onContactCall = onContactCall,
                     onContactSms = onContactSms,
+                    onContactThread = onContactThread,
                     modifier = Modifier
                         .weight(0.62f)
                         .fillMaxSize(),
@@ -277,6 +398,9 @@ fun HomeScreen(
 private fun StatusColumn(
     device: DeviceSettings?,
     deviceConfig: DeviceConfig?,
+    weatherLine: String?,
+    familyMessages: List<DeviceMessage>,
+    showKioskLauncherHint: Boolean,
     onShowPairing: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -325,6 +449,50 @@ private fun StatusColumn(
             color = Color.White,
             fontSize = 22.sp,
         )
+        weatherLine?.let { line ->
+            Text(
+                text = line,
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 20.sp,
+            )
+        }
+        device?.networkLabel?.let { net ->
+            Text(
+                text = "Síť: $net",
+                color = Color.White.copy(alpha = 0.88f),
+                fontSize = 18.sp,
+            )
+        }
+        if (showKioskLauncherHint) {
+            Text(
+                text = stringResource(R.string.kiosk_home_hint),
+                color = Color(0xFFFFCC66),
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
+            )
+        }
+        if (familyMessages.isNotEmpty()) {
+            Text(
+                text = "Vzkazy od rodiny (na celý tablet)",
+                color = Color(0xFFFFFF00),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            familyMessages.forEach { m ->
+                Text(
+                    text = "[Rodina] ${m.senderDisplayName ?: "—"}: ${m.body}",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 16.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = "U kontaktu klepni „Vlákno“ — zobrazí se odchozí zprávy (cloud i SMS).",
+                color = Color.White.copy(alpha = 0.55f),
+                fontSize = 14.sp,
+            )
+        }
         device?.batteryPercent?.let { pct ->
             Text(
                 text = buildString {
@@ -351,6 +519,7 @@ private fun ContactsColumn(
     contacts: List<Contact>,
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
+    onContactThread: (Contact) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -381,6 +550,7 @@ private fun ContactsColumn(
                             if (c.phone.isNotBlank()) onContactCall(c.phone)
                         },
                         onSms = { onContactSms(c) },
+                        onThread = { onContactThread(c) },
                     )
                 }
             }
@@ -393,6 +563,7 @@ private fun ContactRow(
     contact: Contact,
     onCall: () -> Unit,
     onSms: () -> Unit,
+    onThread: () -> Unit,
 ) {
     val canCommunicate = contact.phone.isNotBlank() && normalizePhoneForDial(contact.phone) != null
     Column(
@@ -452,6 +623,126 @@ private fun ContactRow(
                     Text("SMS", fontSize = 18.sp)
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onThread,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1A1A1A),
+                    contentColor = Color.White.copy(alpha = 0.92f),
+                ),
+            ) {
+                Text("Vlákno (zprávy s kontaktem)", fontSize = 17.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContactThreadOverlay(
+    contact: Contact,
+    messages: List<DeviceMessage>,
+    onDismiss: () -> Unit,
+    onReply: () -> Unit,
+) {
+    val fmt = remember {
+        SimpleDateFormat("d.M. HH:mm", Locale.getDefault())
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xEE000000)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .fillMaxHeight(0.88f)
+                .background(Color(0xFF111111))
+                .border(1.dp, Color(0xFFFFFF00))
+                .padding(20.dp),
+        ) {
+            Text(
+                text = "Konverzace",
+                color = Color(0xFFFFFF00),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = contact.name.ifEmpty { contact.phone },
+                color = Color.White,
+                fontSize = 20.sp,
+            )
+            Text(
+                text = contact.phone,
+                color = Color.White.copy(alpha = 0.75f),
+                fontSize = 16.sp,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            if (messages.isEmpty()) {
+                Text(
+                    text = "Zatím žádná zpráva v tomto vlákně. Po odeslání nebo příjmu SMS (číslo v kontaktech) a po zprávách přes aplikaci se záznam zobrazí tady i u rodiny ve webu.",
+                    color = Color.White.copy(alpha = 0.78f),
+                    fontSize = 16.sp,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                ) {
+                    items(messages, key = { it.id }) { m ->
+                        val timeLabel = m.createdAt?.toDate()?.let { fmt.format(it) } ?: "—"
+                        val tech = when (m.delivery) {
+                            MvpRepository.VAL_DELIVERY_TABLET_FIRESTORE -> "Aplikace (cloud)"
+                            MvpRepository.VAL_DELIVERY_SMS_CELLULAR -> "SMS (odchozí)"
+                            MvpRepository.VAL_DELIVERY_SMS_INBOUND -> "SMS (příchozí)"
+                            else -> "Tablet"
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF1A1A1A))
+                                .padding(12.dp),
+                        ) {
+                            Text(
+                                text = "$timeLabel · $tech",
+                                color = Color(0xFFFFFF00),
+                                fontSize = 14.sp,
+                            )
+                            Text(
+                                text = m.body,
+                                color = Color.White,
+                                fontSize = 17.sp,
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2A2A2A),
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Text("Zavřít", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = onReply,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Napsat", fontSize = 18.sp)
+                }
+            }
         }
     }
 }
@@ -459,11 +750,24 @@ private fun ContactRow(
 @Composable
 private fun SmsComposeOverlay(
     contact: Contact,
+    useCellularSms: Boolean,
     errorMessage: String?,
     onDismiss: () -> Unit,
     onSend: (String) -> Unit,
 ) {
     var text by remember(contact.id) { mutableStateOf("") }
+    val title = if (useCellularSms) {
+        "Zpráva pro ${contact.name.ifEmpty { contact.phone }}"
+    } else {
+        "Zpráva pro ${contact.name.ifEmpty { contact.phone }} (bez klasické SMS)"
+    }
+    val techHint = if (useCellularSms) {
+        "Technologie: SMS přes mobilní síť. Text se zároveň uloží do cloudu (vlákno u kontaktu a web pro rodinu)."
+    } else {
+        "Technologie: Firebase Firestore + synchronizace do webové administrace. " +
+            "Na telefon příjemce nedorazí jako klasická SMS — uvidí ji přihlášená rodina v aplikaci."
+    }
+    val sendLabel = if (useCellularSms) "Odeslat SMS" else "Odeslat přes aplikaci"
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -479,7 +783,7 @@ private fun SmsComposeOverlay(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                text = "SMS pro ${contact.name.ifEmpty { contact.phone }}",
+                text = title,
                 color = Color(0xFFFFFF00),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
@@ -488,6 +792,12 @@ private fun SmsComposeOverlay(
                 text = contact.phone,
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 18.sp,
+            )
+            Text(
+                text = techHint,
+                color = Color.White.copy(alpha = 0.78f),
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
             )
             OutlinedTextField(
                 value = text,
@@ -539,9 +849,41 @@ private fun SmsComposeOverlay(
                         contentColor = Color.Black,
                     ),
                 ) {
-                    Text("Odeslat", fontSize = 18.sp)
+                    Text(sendLabel, fontSize = 18.sp)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun KioskPinningEffect(
+    paired: Boolean,
+    onHomeStateRefresh: () -> Unit,
+) {
+    val context = LocalContext.current
+    val activity = context as? ComponentActivity ?: return
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(paired, lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                onHomeStateRefresh()
+                if (paired) {
+                    KioskMode.tryStartPinning(activity)
+                } else {
+                    KioskMode.tryStopPinning(activity)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onHomeStateRefresh()
+        if (paired) {
+            KioskMode.tryStartPinning(activity)
+        } else {
+            KioskMode.tryStopPinning(activity)
+        }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 }
@@ -712,7 +1054,7 @@ private fun KioskUnlockOverlay(
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "Stejný kód jako ve webové administraci (4 číslice).",
+                text = "Stejný kód jako ve webové administraci (4 číslice). Po ověření se krátce uvolní kiosk a otevřou systémová nastavení.",
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 18.sp,
             )
@@ -928,6 +1270,8 @@ private fun HomeScreenPreview() {
             onSubmitKioskPin = {},
             onContactCall = {},
             onContactSms = {},
+            onContactThread = {},
+            showKioskLauncherHint = false,
         )
     }
 }
@@ -961,6 +1305,8 @@ private fun HomeScreenAlertPreview() {
             onSubmitKioskPin = {},
             onContactCall = {},
             onContactSms = {},
+            onContactThread = {},
+            showKioskLauncherHint = false,
         )
     }
 }
@@ -981,6 +1327,8 @@ private fun HomeScreenLoadingPreview() {
             onSubmitKioskPin = {},
             onContactCall = {},
             onContactSms = {},
+            onContactThread = {},
+            showKioskLauncherHint = false,
         )
     }
 }

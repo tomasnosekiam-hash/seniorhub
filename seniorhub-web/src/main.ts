@@ -15,6 +15,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -33,6 +34,11 @@ import {
   KEY_DEVICE_LABEL,
   KEY_MESSAGE_BODY,
   KEY_MESSAGE_CREATED_AT,
+  KEY_MESSAGE_DELIVERY,
+  KEY_MESSAGE_OUTBOUND_NAME,
+  KEY_MESSAGE_OUTBOUND_PHONE,
+  KEY_MESSAGE_INBOUND_FROM_NAME,
+  KEY_MESSAGE_INBOUND_FROM_PHONE,
   KEY_MESSAGE_READ_AT,
   KEY_NAME,
   KEY_PAIRING_CODE,
@@ -49,6 +55,7 @@ import {
   KEY_BATTERY_PERCENT,
   KEY_CHARGING,
   KEY_LAST_HEARTBEAT_AT,
+  KEY_NETWORK_LABEL,
   KEY_IS_EMERGENCY,
   KEY_SORT_ORDER,
   KEY_UID,
@@ -56,9 +63,11 @@ import {
   KEY_USED_BY_UID,
   KEY_VOLUME_PERCENT,
   PAIRING_COLLECTION,
+  STATUS_DOC_ID,
   SUB_CONFIG,
   SUB_CONTACTS,
   SUB_MESSAGES,
+  SUB_STATUS,
 } from './constants'
 import { auth, firestore, googleProvider, initFirebase } from './firebase'
 
@@ -70,6 +79,7 @@ type DeviceListItem = {
   batteryPercent?: number
   charging?: boolean
   lastHeartbeatLabel?: string
+  networkLabel?: string
 }
 
 const root = document.querySelector<HTMLDivElement>('#app')
@@ -92,8 +102,39 @@ if (!configured || !app) {
   const authClient = auth(app)
   const provider = googleProvider()
 
+  function sortOrderToNumber(v: unknown): number {
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    if (typeof v === 'string') {
+      const n = Number.parseInt(v, 10)
+      return Number.isFinite(n) ? n : 0
+    }
+    return 0
+  }
+
+  async function swapContactSortOrders(
+    deviceId: string,
+    idA: string,
+    idB: string,
+  ): Promise<void> {
+    if (idA === idB) return
+    const refA = doc(db, COLLECTION, deviceId, SUB_CONTACTS, idA)
+    const refB = doc(db, COLLECTION, deviceId, SUB_CONTACTS, idB)
+    await runTransaction(db, async (transaction) => {
+      const sa = await transaction.get(refA)
+      const sb = await transaction.get(refB)
+      if (!sa.exists() || !sb.exists()) {
+        throw new Error('Kontakt neexistuje.')
+      }
+      const orderA = sortOrderToNumber(sa.data()?.[KEY_SORT_ORDER])
+      const orderB = sortOrderToNumber(sb.data()?.[KEY_SORT_ORDER])
+      transaction.update(refA, { [KEY_SORT_ORDER]: orderB })
+      transaction.update(refB, { [KEY_SORT_ORDER]: orderA })
+    })
+  }
+
   let selectedDeviceId: string | null = null
   let stopDevice: (() => void) | null = null
+  let stopStatus: (() => void) | null = null
   let stopContacts: (() => void) | null = null
   let stopJoins: (() => void) | null = null
   let stopConfig: (() => void) | null = null
@@ -120,6 +161,14 @@ if (!configured || !app) {
       <section class="card" id="pairCard" hidden>
         <h2>Přidat tablet</h2>
         <p class="sub">Na tabletu otevři párovací obrazovku a zadej kód.</p>
+        <label class="field">
+          <span>Role u tohoto tabletu</span>
+          <select id="pairRole" class="inline-select">
+            <option value="admin">Správce (PIN, kontakty, vzkazy)</option>
+            <option value="viewer">Člen rodiny (jen vzkazy na tablet)</option>
+          </select>
+        </label>
+        <p class="sub">Člen rodiny neuvidí PIN ani kontakty — může posílat vzkazy. Pravidla jsou ve Firestore.</p>
         <div class="row">
           <input id="pairCode" type="text" autocomplete="off" placeholder="Např. R5K8P2" class="inline-input" />
           <button id="pairBtn" type="button" class="primary">Spárovat</button>
@@ -193,7 +242,7 @@ if (!configured || !app) {
 
       <section class="card" id="contactsCard" hidden>
         <h2>Kontakty na tabletu</h2>
-        <p class="sub">Zaškrtni <strong>Nouze</strong> u kontaktů pro prioritu při hovoru / Matějovi.</p>
+        <p class="sub">Šipkami změníš pořadí v seznamu (stejné jako na Androidu u správce). Zaškrtni <strong>Nouze</strong> pro prioritu při hovoru / Matějovi.</p>
         <ul id="contactList" class="list"></ul>
         <div class="grid">
           <label class="field">
@@ -222,6 +271,7 @@ if (!configured || !app) {
           <button id="sendMessage" type="button" class="primary">Odeslat na tablet</button>
         </div>
         <h3 class="sub">Historie</h3>
+        <p class="sub" id="messagesViewerHint" hidden></p>
         <ul id="messageList" class="list"></ul>
       </section>
     </main>
@@ -231,6 +281,7 @@ if (!configured || !app) {
   const authBtn = document.querySelector<HTMLButtonElement>('#authBtn')!
   const authState = document.querySelector<HTMLParagraphElement>('#authState')!
   const pairCard = document.querySelector<HTMLElement>('#pairCard')!
+  const pairRole = document.querySelector<HTMLSelectElement>('#pairRole')!
   const pairCode = document.querySelector<HTMLInputElement>('#pairCode')!
   const pairBtn = document.querySelector<HTMLButtonElement>('#pairBtn')!
   const pairStatus = document.querySelector<HTMLParagraphElement>('#pairStatus')!
@@ -297,10 +348,11 @@ if (!configured || !app) {
         [KEY_USED_AT]: serverTimestamp(),
         [KEY_USED_BY_UID]: user.uid,
       })
+      const joinRole = pairRole.value === 'viewer' ? 'viewer' : 'admin'
       batch.set(joinRef, {
         [KEY_DEVICE_ID]: deviceId,
         [KEY_UID]: user.uid,
-        [KEY_ROLE]: 'admin',
+        [KEY_ROLE]: joinRole,
         [KEY_CLAIM_CODE]: code,
         createdAt: serverTimestamp(),
       })
@@ -443,11 +495,13 @@ if (!configured || !app) {
   onAuthStateChanged(authClient, (user) => {
     stopJoins?.()
     stopDevice?.()
+    stopStatus?.()
     stopContacts?.()
     stopConfig?.()
     stopMessages?.()
     stopJoins = null
     stopDevice = null
+    stopStatus = null
     stopContacts = null
     stopConfig = null
     stopMessages = null
@@ -497,6 +551,12 @@ if (!configured || !app) {
                   ? Number.parseInt(bat, 10)
                   : undefined
             const hb = deviceData[KEY_LAST_HEARTBEAT_AT]
+            const statusSnap = await getDoc(
+              doc(db, COLLECTION, deviceId, SUB_STATUS, STATUS_DOC_ID),
+            )
+            const networkLabelRaw = statusSnap.exists()
+              ? String(statusSnap.data()?.[KEY_NETWORK_LABEL] ?? '').trim()
+              : ''
             return {
               deviceId,
               label: String(deviceData[KEY_DEVICE_LABEL] ?? deviceId),
@@ -506,6 +566,7 @@ if (!configured || !app) {
                 Number.isFinite(batteryPercent) ? batteryPercent : undefined,
               charging: Boolean(deviceData[KEY_CHARGING]),
               lastHeartbeatLabel: formatFirestoreDate(hb) ?? undefined,
+              networkLabel: networkLabelRaw || undefined,
             }
           }),
         )
@@ -544,7 +605,9 @@ if (!configured || !app) {
     if (!selectedDeviceId || !items.some((item) => item.deviceId === selectedDeviceId)) {
       selectedDeviceId = items[0]?.deviceId ?? null
       if (selectedDeviceId) {
-        connectSelectedDevice(selectedDeviceId, user)
+        const r =
+          items.find((i) => i.deviceId === selectedDeviceId)?.role ?? 'admin'
+        connectSelectedDevice(selectedDeviceId, user, r)
       }
     }
 
@@ -561,30 +624,57 @@ if (!configured || !app) {
       if (item.lastHeartbeatLabel) {
         statusBits.push(`kontakt ${item.lastHeartbeatLabel}`)
       }
+      if (item.networkLabel) {
+        statusBits.push(String(item.networkLabel))
+      }
       const statusLine =
         statusBits.length > 0 ? ` · ${statusBits.join(' · ')}` : ''
+      const roleLabel = item.role === 'viewer' ? 'rodina' : 'správce'
       button.innerHTML = `
         <span>${escapeHtml(item.label)}</span>
-        <small>${escapeHtml(item.deviceId)} · ${escapeHtml(item.role)}${item.paired ? '' : ' · čeká na spárování'}${escapeHtml(statusLine)}</small>
+        <small>${escapeHtml(item.deviceId)} · ${escapeHtml(roleLabel)}${item.paired ? '' : ' · čeká na spárování'}${escapeHtml(statusLine)}</small>
       `
       button.addEventListener('click', () => {
         selectedDeviceId = item.deviceId
-        connectSelectedDevice(item.deviceId, user)
+        connectSelectedDevice(item.deviceId, user, item.role)
         renderDeviceList(items, user)
       })
       deviceList.appendChild(button)
     })
   }
 
-  function connectSelectedDevice(deviceId: string, user: User) {
+  function connectSelectedDevice(
+    deviceId: string,
+    user: User,
+    joinRole: string = 'admin',
+  ) {
     stopDevice?.()
+    stopStatus?.()
     stopContacts?.()
     stopConfig?.()
     stopMessages?.()
-    settingsCard.hidden = false
-    contactsCard.hidden = false
+    const isViewer = joinRole === 'viewer'
+    settingsCard.hidden = isViewer
+    contactsCard.hidden = isViewer
     messagesCard.hidden = false
+    const viewerHint = document.querySelector<HTMLParagraphElement>(
+      '#messagesViewerHint',
+    )!
+    if (isViewer) {
+      viewerHint.hidden = false
+      viewerHint.textContent =
+        'Režim člena rodiny: můžeš posílat vzkazy. Úpravy PINu, kontaktů a názvu zařízení dělá hlavní správce.'
+    } else {
+      viewerHint.hidden = true
+      viewerHint.textContent = ''
+    }
     selectedDeviceLabel.textContent = `Zařízení ${deviceId}`
+
+    let deviceHeaderBase = `Zařízení ${deviceId}`
+    let networkSuffix = ''
+    const refreshDeviceHeader = () => {
+      selectedDeviceLabel.textContent = deviceHeaderBase + networkSuffix
+    }
 
     stopDevice = onSnapshot(
       doc(db, COLLECTION, deviceId),
@@ -615,11 +705,27 @@ if (!configured || !app) {
             : ''
         const hb = formatFirestoreDate(data[KEY_LAST_HEARTBEAT_AT])
         const heartbeatHint = hb ? ` · naposledy z tabletu ${hb}` : ''
-        selectedDeviceLabel.textContent =
+        deviceHeaderBase =
           `${String(data[KEY_DEVICE_LABEL] ?? deviceId)} · ${deviceId}${pairingHint}${batteryHint}${heartbeatHint}`
+        refreshDeviceHeader()
       },
       (err) => {
         conn.textContent = `Chyba zařízení: ${err.message}`
+        conn.classList.add('bad')
+      },
+    )
+
+    stopStatus = onSnapshot(
+      doc(db, COLLECTION, deviceId, SUB_STATUS, STATUS_DOC_ID),
+      (snap) => {
+        const nl = snap.exists()
+          ? String(snap.data()?.[KEY_NETWORK_LABEL] ?? '').trim()
+          : ''
+        networkSuffix = nl ? ` · síť ${nl}` : ''
+        refreshDeviceHeader()
+      },
+      (err) => {
+        conn.textContent = `Chyba stavu zařízení: ${err.message}`
         conn.classList.add('bad')
       },
     )
@@ -667,12 +773,19 @@ if (!configured || !app) {
       contactsQuery,
       (snap) => {
         contactList.innerHTML = ''
-        snap.forEach((contactDoc) => {
+        snap.docs.forEach((contactDoc, index) => {
           const data = contactDoc.data()
           const isEmergency = Boolean(data[KEY_IS_EMERGENCY])
+          const prevId = index > 0 ? snap.docs[index - 1].id : ''
+          const nextId =
+            index < snap.docs.length - 1 ? snap.docs[index + 1].id : ''
           const li = document.createElement('li')
           li.className = isEmergency ? 'contact-row emergency' : 'contact-row'
           li.innerHTML = `
+            <div class="contact-sort">
+              <button type="button" class="linkbtn sort-arrow" aria-label="Výš" data-swap-a="${escapeHtml(contactDoc.id)}" data-swap-b="${escapeHtml(prevId)}" ${prevId ? '' : 'disabled'}>↑</button>
+              <button type="button" class="linkbtn sort-arrow" aria-label="Níž" data-swap-a="${escapeHtml(contactDoc.id)}" data-swap-b="${escapeHtml(nextId)}" ${nextId ? '' : 'disabled'}>↓</button>
+            </div>
             <div class="li-main">
               <div class="li-title">${escapeHtml(String(data[KEY_NAME] ?? '(bez jména)'))}</div>
               <div class="li-sub">${escapeHtml(String(data[KEY_PHONE] ?? '—'))}</div>
@@ -681,7 +794,7 @@ if (!configured || !app) {
                 <span>Nouze</span>
               </label>
             </div>
-            <button type="button" data-id="${contactDoc.id}" class="danger linkbtn">Smazat</button>
+            <button type="button" data-contact-delete="${contactDoc.id}" class="danger linkbtn">Smazat</button>
           `
           contactList.appendChild(li)
         })
@@ -701,9 +814,23 @@ if (!configured || !app) {
           })
         })
 
-        contactList.querySelectorAll<HTMLButtonElement>('button[data-id]').forEach((btn) => {
+        contactList.querySelectorAll<HTMLButtonElement>('button[data-swap-a]').forEach((btn) => {
           btn.addEventListener('click', async () => {
-            const id = btn.dataset.id
+            const a = btn.dataset.swapA
+            const b = btn.dataset.swapB
+            if (!a || !b || !selectedDeviceId) return
+            try {
+              await swapContactSortOrders(selectedDeviceId, a, b)
+            } catch (error) {
+              conn.textContent = `Chyba řazení kontaktu: ${getErrorMessage(error)}`
+              conn.classList.add('bad')
+            }
+          })
+        })
+
+        contactList.querySelectorAll<HTMLButtonElement>('button[data-contact-delete]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.dataset.contactDelete
             if (!id || !selectedDeviceId) return
             await deleteDoc(doc(db, COLLECTION, selectedDeviceId, SUB_CONTACTS, id))
           })
@@ -731,11 +858,37 @@ if (!configured || !app) {
           const readAt = data[KEY_MESSAGE_READ_AT]
           const created = formatFirestoreDate(data[KEY_MESSAGE_CREATED_AT])
           const status = readAt ? 'Přečteno' : 'Nepřečteno na tabletu'
+          const delivery = data[KEY_MESSAGE_DELIVERY]
+          const outboundPhone = String(data[KEY_MESSAGE_OUTBOUND_PHONE] ?? '').trim()
+          const outboundName = String(data[KEY_MESSAGE_OUTBOUND_NAME] ?? '').trim()
+          let tech = 'Web → tablet (Firestore)'
+          if (delivery === 'tablet_firestore') {
+            const target =
+              outboundName || outboundPhone
+                ? `${outboundName ? `${outboundName}` : 'Kontakt'}${outboundPhone ? ` · ${outboundPhone}` : ''}`
+                : 'kontakt'
+            tech = `Tablet bez SMS · Firestore · záměr na: ${target}`
+          } else if (delivery === 'sms_cellular') {
+            const target =
+              outboundName || outboundPhone
+                ? `${outboundName ? `${outboundName}` : 'Kontakt'}${outboundPhone ? ` · ${outboundPhone}` : ''}`
+                : 'kontakt'
+            tech = `Tablet · klasická SMS (zrcadlo v cloudu) · ${target}`
+          } else if (delivery === 'sms_inbound') {
+            const inboundPhone = String(data[KEY_MESSAGE_INBOUND_FROM_PHONE] ?? '').trim()
+            const inboundName = String(data[KEY_MESSAGE_INBOUND_FROM_NAME] ?? '').trim()
+            const target =
+              inboundName || inboundPhone
+                ? `${inboundName ? `${inboundName}` : 'Kontakt'}${inboundPhone ? ` · ${inboundPhone}` : ''}`
+                : 'kontakt'
+            tech = `Tablet · příchozí klasická SMS (zrcadlo v cloudu) · ${target}`
+          }
           const li = document.createElement('li')
           li.innerHTML = `
             <div class="li-main">
               <div class="li-title">${escapeHtml(body.slice(0, 200))}${body.length > 200 ? '…' : ''}</div>
               <div class="li-sub">${escapeHtml(from)} · ${escapeHtml(created)} · ${escapeHtml(status)}</div>
+              <div class="li-tech">${escapeHtml(tech)}</div>
             </div>
           `
           messageList.appendChild(li)

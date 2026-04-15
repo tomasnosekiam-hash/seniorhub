@@ -7,6 +7,8 @@ data class Contact(
     val name: String,
     val phone: String,
     val isEmergency: Boolean = false,
+    /** Řazení v seznamu (`devices/.../contacts.sortOrder`). */
+    val sortOrder: Long = 0L,
 )
 
 data class DeviceSettings(
@@ -21,6 +23,8 @@ data class DeviceSettings(
     val batteryPercent: Int? = null,
     val charging: Boolean = false,
     val lastHeartbeatAtLabel: String? = null,
+    /** Z `devices/.../status/main` (síť). */
+    val networkLabel: String? = null,
 )
 
 /** `devices/{id}/config/main` — admin PIN, SIM, asistent, profil seniora (senior / kiosk). */
@@ -45,4 +49,11 @@ data class DeviceMessage(
     val createdAt: Timestamp?,
     val readAt: Timestamp?,
     val senderDisplayName: String?,
+    /** `tablet_firestore` = cloud bez SIM; `sms_cellular` = zrcadlo klasické SMS; `sms_inbound` = příchozí SMS do vlákna; null = web / rodina. */
+    val delivery: String? = null,
+    val outboundPhone: String? = null,
+    val outboundName: String? = null,
+    /** U [delivery] `sms_inbound` — odesílatel (telefon). */
+    val inboundFromPhone: String? = null,
+    val inboundFromName: String? = null,
 )

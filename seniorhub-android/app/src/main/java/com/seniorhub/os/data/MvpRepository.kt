@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.seniorhub.os.util.normalizePhoneForDial
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -23,6 +24,7 @@ class MvpRepository(
 
     private val deviceRef get() = db.collection(COLLECTION).document(deviceId)
     private val configRef get() = deviceRef.collection(SUB_CONFIG).document(CONFIG_DOC_ID)
+    private val statusRef get() = deviceRef.collection(SUB_STATUS).document(STATUS_DOC_ID)
     private val deviceAuthUid get() = auth.currentUser?.uid.orEmpty()
 
     suspend fun signInDevice() {
@@ -108,27 +110,36 @@ class MvpRepository(
     }
 
     fun observeDevice(): Flow<Result<DeviceSettings?>> = callbackFlow {
-        val registration = deviceRef.addSnapshotListener { snapshot, error ->
+        var lastDevice: com.google.firebase.firestore.DocumentSnapshot? = null
+        var lastStatus: com.google.firebase.firestore.DocumentSnapshot? = null
+
+        fun emitMerged() {
+            val snap = lastDevice ?: return
             when {
-                error != null -> trySend(Result.failure(error))
-                snapshot == null || !snapshot.exists() -> trySend(Result.success(null))
+                !snap.exists() -> trySend(Result.success(null))
                 else -> {
-                    val label = snapshot.getString(KEY_DEVICE_LABEL)?.trim().orEmpty()
+                    val label = snap.getString(KEY_DEVICE_LABEL)?.trim().orEmpty()
                         .ifEmpty { "Tablet" }
-                    val volume = (snapshot.getLong(KEY_VOLUME_PERCENT) ?: 50L).toInt()
+                    val volume = (snap.getLong(KEY_VOLUME_PERCENT) ?: 50L).toInt()
                         .coerceIn(0, 100)
-                    val alert = snapshot.getString(KEY_ALERT_MESSAGE)?.trim().orEmpty()
+                    val alert = snap.getString(KEY_ALERT_MESSAGE)?.trim().orEmpty()
                         .ifEmpty { null }
-                    val paired = snapshot.getBoolean(KEY_PAIRED) == true
-                    val pairingCode = snapshot.getString(KEY_PAIRING_CODE)?.trim().orEmpty()
+                    val paired = snap.getBoolean(KEY_PAIRED) == true
+                    val pairingCode = snap.getString(KEY_PAIRING_CODE)?.trim().orEmpty()
                         .ifEmpty { null }
-                    val pairingExpiresAtLabel = snapshot.getTimestamp(KEY_PAIRING_EXPIRES_AT)
+                    val pairingExpiresAtLabel = snap.getTimestamp(KEY_PAIRING_EXPIRES_AT)
                         ?.toPairingLabel()
-                    val batteryRaw = snapshot.getLong(KEY_BATTERY_PERCENT)
+                    val batteryRaw = snap.getLong(KEY_BATTERY_PERCENT)
                     val batteryPercent = batteryRaw?.toInt()?.coerceIn(0, 100)
-                    val charging = snapshot.getBoolean(KEY_CHARGING) == true
-                    val lastHeartbeatAtLabel = snapshot.getTimestamp(KEY_LAST_HEARTBEAT_AT)
+                    val charging = snap.getBoolean(KEY_CHARGING) == true
+                    val lastHeartbeatAtLabel = snap.getTimestamp(KEY_LAST_HEARTBEAT_AT)
                         ?.toHeartbeatLabel()
+                    val st = lastStatus
+                    val networkLabel = if (st != null && st.exists()) {
+                        st.getString(KEY_NETWORK_LABEL)?.trim().orEmpty().ifEmpty { null }
+                    } else {
+                        null
+                    }
                     trySend(
                         Result.success(
                             DeviceSettings(
@@ -142,13 +153,36 @@ class MvpRepository(
                                 batteryPercent = batteryPercent,
                                 charging = charging,
                                 lastHeartbeatAtLabel = lastHeartbeatAtLabel,
+                                networkLabel = networkLabel,
                             ),
                         ),
                     )
                 }
             }
         }
-        awaitClose { registration.remove() }
+
+        val regDevice = deviceRef.addSnapshotListener { snapshot, error ->
+            when {
+                error != null -> trySend(Result.failure(error))
+                else -> {
+                    lastDevice = snapshot
+                    emitMerged()
+                }
+            }
+        }
+        val regStatus = statusRef.addSnapshotListener { snapshot, error ->
+            when {
+                error != null -> trySend(Result.failure(error))
+                else -> {
+                    lastStatus = snapshot
+                    emitMerged()
+                }
+            }
+        }
+        awaitClose {
+            regDevice.remove()
+            regStatus.remove()
+        }
     }
 
     fun observeMessages(): Flow<Result<List<DeviceMessage>>> = callbackFlow {
@@ -168,6 +202,16 @@ class MvpRepository(
                                 readAt = doc.getTimestamp(KEY_READ_AT),
                                 senderDisplayName = doc.getString(KEY_SENDER_DISPLAY_NAME)?.trim()
                                     ?.takeIf { it.isNotEmpty() },
+                                delivery = doc.getString(KEY_DELIVERY)?.trim().orEmpty()
+                                    .ifEmpty { null },
+                                outboundPhone = doc.getString(KEY_OUTBOUND_PHONE)?.trim().orEmpty()
+                                    .ifEmpty { null },
+                                outboundName = doc.getString(KEY_OUTBOUND_NAME)?.trim().orEmpty()
+                                    .ifEmpty { null },
+                                inboundFromPhone = doc.getString(KEY_INBOUND_FROM_PHONE)?.trim().orEmpty()
+                                    .ifEmpty { null },
+                                inboundFromName = doc.getString(KEY_INBOUND_FROM_NAME)?.trim().orEmpty()
+                                    .ifEmpty { null },
                             )
                         }
                         trySend(Result.success(list))
@@ -181,6 +225,104 @@ class MvpRepository(
         signInDevice()
         deviceRef.collection(SUB_MESSAGES).document(messageId).update(
             mapOf(KEY_READ_AT to FieldValue.serverTimestamp()),
+        ).await()
+    }
+
+    /**
+     * Tablet bez klasické SMS: záznam do stejné kolekce jako vzkazy z webu — rodina ho uvidí ve webové administraci
+     * (Firebase Firestore + případně FCM u správců v budoucnu). Není to klasická SMS na telefon příjemce.
+     */
+    suspend fun sendTabletFirestoreMessage(contact: Contact, body: String) {
+        addOutboundDeviceMessage(contact, body.trim(), VAL_DELIVERY_TABLET_FIRESTORE)
+    }
+
+    /**
+     * Po úspěšném odeslání klasické SMS — stejný dokument jako u [sendTabletFirestoreMessage], ale [VAL_DELIVERY_SMS_CELLULAR].
+     * Sjednocuje vlákno u kontaktu (cloud + skutečná SMS).
+     */
+    suspend fun recordOutboundCellularSms(contact: Contact, body: String) {
+        addOutboundDeviceMessage(contact, body.trim(), VAL_DELIVERY_SMS_CELLULAR)
+    }
+
+    /**
+     * Příchozí klasická SMS od čísla odpovídajícího kontaktu — stejná kolekce jako odchozí vlákno.
+     */
+    suspend fun recordInboundCellularSms(
+        rawFromAddress: String,
+        body: String,
+        matchedContact: Contact,
+    ) {
+        signInDevice()
+        val text = body.trim()
+        if (text.isEmpty()) {
+            throw IllegalArgumentException("Zpráva je prázdná.")
+        }
+        val fromPhone = rawFromAddress.trim()
+        if (fromPhone.isEmpty()) {
+            throw IllegalArgumentException("Chybí číslo odesílatele.")
+        }
+        val displayName = matchedContact.name.trim().ifEmpty { fromPhone }
+        val senderLabel = "$displayName (příchozí SMS)"
+        deviceRef.collection(SUB_MESSAGES).add(
+            mapOf(
+                KEY_BODY to text,
+                KEY_SENDER_UID to deviceAuthUid,
+                KEY_SENDER_DISPLAY_NAME to senderLabel,
+                KEY_CREATED_AT to FieldValue.serverTimestamp(),
+                KEY_READ_AT to FieldValue.serverTimestamp(),
+                KEY_DELIVERY to VAL_DELIVERY_SMS_INBOUND,
+                KEY_INBOUND_FROM_PHONE to fromPhone,
+                KEY_INBOUND_FROM_NAME to matchedContact.name.trim(),
+            ),
+        ).await()
+    }
+
+    suspend fun findContactForIncomingPhone(rawFromAddress: String): Contact? {
+        signInDevice()
+        val normIncoming = normalizePhoneForDial(rawFromAddress.trim()) ?: return null
+        val snap = deviceRef.collection(SUB_CONTACTS).get().await()
+        for (doc in snap.documents) {
+            val name = doc.getString(KEY_NAME)?.trim().orEmpty()
+            val phone = doc.getString(KEY_PHONE)?.trim().orEmpty()
+            if (name.isEmpty() && phone.isEmpty()) continue
+            val normContact = normalizePhoneForDial(phone) ?: continue
+            if (normContact == normIncoming) {
+                return Contact(
+                    id = doc.id,
+                    name = name,
+                    phone = phone,
+                    isEmergency = doc.getBoolean(KEY_IS_EMERGENCY) == true,
+                    sortOrder = doc.getLong(KEY_SORT_ORDER) ?: 0L,
+                )
+            }
+        }
+        return null
+    }
+
+    private suspend fun addOutboundDeviceMessage(contact: Contact, body: String, delivery: String) {
+        signInDevice()
+        if (body.isEmpty()) {
+            throw IllegalArgumentException("Zpráva je prázdná.")
+        }
+        val phone = contact.phone.trim()
+        if (phone.isEmpty()) {
+            throw IllegalArgumentException("Chybí telefonní číslo kontaktu.")
+        }
+        val snap = deviceRef.get().await()
+        val label = snap.getString(KEY_DEVICE_LABEL)?.trim().orEmpty().ifBlank { "Tablet" }
+        val senderLabel = "$label (tablet)"
+        deviceRef.collection(SUB_MESSAGES).add(
+            mapOf(
+                KEY_BODY to body,
+                KEY_SENDER_UID to deviceAuthUid,
+                KEY_SENDER_DISPLAY_NAME to senderLabel,
+                KEY_CREATED_AT to FieldValue.serverTimestamp(),
+                // Odchozí z tabletu — nepovažovat za „nepřečtený vzkaz“ přes celou obrazovku.
+                KEY_READ_AT to FieldValue.serverTimestamp(),
+                KEY_DELIVERY to delivery,
+                KEY_OUTBOUND_PHONE to phone,
+                KEY_OUTBOUND_NAME to contact.name.trim(),
+            ),
         ).await()
     }
 
@@ -198,7 +340,12 @@ class MvpRepository(
     /**
      * Pravidelný „životní“ signál pro správce (baterie, nabíjení, čas posledního kontaktu).
      */
-    suspend fun postDeviceHeartbeat(batteryPercent: Int?, charging: Boolean) {
+    suspend fun postDeviceHeartbeat(
+        batteryPercent: Int?,
+        charging: Boolean,
+        networkType: String? = null,
+        networkLabel: String? = null,
+    ) {
         signInDevice()
         val payload = mutableMapOf<String, Any>(
             KEY_LAST_HEARTBEAT_AT to FieldValue.serverTimestamp(),
@@ -209,6 +356,22 @@ class MvpRepository(
             payload[KEY_BATTERY_PERCENT] = batteryPercent
         }
         deviceRef.set(payload, com.google.firebase.firestore.SetOptions.merge()).await()
+
+        val statusPayload = mutableMapOf<String, Any>(
+            KEY_STATUS_UPDATED_AT to FieldValue.serverTimestamp(),
+            KEY_LAST_HEARTBEAT_AT to FieldValue.serverTimestamp(),
+            KEY_CHARGING to charging,
+        )
+        if (batteryPercent != null) {
+            statusPayload[KEY_BATTERY_PERCENT] = batteryPercent
+        }
+        if (!networkType.isNullOrBlank()) {
+            statusPayload[KEY_NETWORK_TYPE] = networkType.trim()
+        }
+        if (!networkLabel.isNullOrBlank()) {
+            statusPayload[KEY_NETWORK_LABEL] = networkLabel.trim()
+        }
+        statusRef.set(statusPayload, com.google.firebase.firestore.SetOptions.merge()).await()
     }
 
     fun observeContacts(): Flow<Result<List<Contact>>> = callbackFlow {
@@ -228,6 +391,7 @@ class MvpRepository(
                                 name = name,
                                 phone = phone,
                                 isEmergency = doc.getBoolean(KEY_IS_EMERGENCY) == true,
+                                sortOrder = doc.getLong(KEY_SORT_ORDER) ?: 0L,
                             )
                         }
                         trySend(Result.success(list))
@@ -244,6 +408,26 @@ class MvpRepository(
                 "lastSeenAt" to FieldValue.serverTimestamp(),
             ),
         ).await()
+    }
+
+    /** Zápis incidentu z modulu Matěj (nouzové vytočení) — spouští FCM pro správce přes Cloud Function. */
+    suspend fun recordMatejEmergencyIncident(
+        dialedPhone: String,
+        dialedContactLabel: String?,
+    ) {
+        signInDevice()
+        val phone = dialedPhone.trim().take(40)
+        if (phone.isEmpty()) return
+        val payload = mutableMapOf<String, Any>(
+            KEY_INCIDENT_SOURCE to VAL_INCIDENT_SOURCE_MATEJ,
+            KEY_INCIDENT_CREATED_AT to FieldValue.serverTimestamp(),
+            KEY_INCIDENT_DIALED_PHONE to phone,
+        )
+        val label = dialedContactLabel?.trim()?.take(120).orEmpty()
+        if (label.isNotEmpty()) {
+            payload[KEY_INCIDENT_DIALED_LABEL] = label
+        }
+        deviceRef.collection(SUB_INCIDENTS).add(payload).await()
     }
 
     suspend fun rotatePairingCodeIfNeeded(force: Boolean): PairingInfo {
@@ -317,14 +501,31 @@ class MvpRepository(
 
     companion object {
         const val COLLECTION = "devices"
+        /** Stejné jako web (`deviceAdmins`): vazba správce ↔ zařízení. */
+        const val COLLECTION_DEVICE_ADMINS = "deviceAdmins"
         const val PAIRING_COLLECTION = "pairingClaims"
         const val SUB_CONTACTS = "contacts"
         const val SUB_MESSAGES = "messages"
+        const val SUB_INCIDENTS = "incidents"
         const val SUB_CONFIG = "config"
+        const val SUB_STATUS = "status"
+        const val STATUS_DOC_ID = "main"
         const val KEY_BODY = "body"
         const val KEY_CREATED_AT = "createdAt"
         const val KEY_READ_AT = "readAt"
+        const val KEY_SENDER_UID = "senderUid"
         const val KEY_SENDER_DISPLAY_NAME = "senderDisplayName"
+        /** Náhrada SMS z tabletu bez SIM — viz Firestore rules (`tablet_firestore`). */
+        const val KEY_DELIVERY = "delivery"
+        const val VAL_DELIVERY_TABLET_FIRESTORE = "tablet_firestore"
+        /** Odchozí klasická SMS — zrcadlo do Firestore pro jednotné vlákno. */
+        const val VAL_DELIVERY_SMS_CELLULAR = "sms_cellular"
+        /** Příchozí klasická SMS (číslo patří kontaktu) — stejné vlákno v UI. */
+        const val VAL_DELIVERY_SMS_INBOUND = "sms_inbound"
+        const val KEY_OUTBOUND_PHONE = "outbound_phone"
+        const val KEY_OUTBOUND_NAME = "outbound_name"
+        const val KEY_INBOUND_FROM_PHONE = "inbound_from_phone"
+        const val KEY_INBOUND_FROM_NAME = "inbound_from_name"
         const val KEY_FCM_REGISTRATION_TOKEN = "fcmRegistrationToken"
         const val CONFIG_DOC_ID = "main"
         const val KEY_ADMIN_PIN = "admin_pin"
@@ -333,7 +534,7 @@ class MvpRepository(
         const val KEY_SENIOR_FIRST_NAME = "senior_first_name"
         const val KEY_SENIOR_LAST_NAME = "senior_last_name"
         const val KEY_ADDRESS_LINE = "address_line"
-        private const val DEFAULT_ASSISTANT_NAME = "Matěj"
+        const val DEFAULT_ASSISTANT_NAME = "Matěj"
         const val KEY_DEVICE_ID = "deviceId"
         const val KEY_DEVICE_AUTH_UID = "deviceAuthUid"
         const val KEY_DEVICE_LABEL = "deviceLabel"
@@ -346,6 +547,12 @@ class MvpRepository(
         const val KEY_PHONE = "phone"
         const val KEY_IS_EMERGENCY = "is_emergency"
         const val KEY_SORT_ORDER = "sortOrder"
+
+        const val KEY_INCIDENT_SOURCE = "source"
+        const val VAL_INCIDENT_SOURCE_MATEJ = "matej_emergency"
+        const val KEY_INCIDENT_CREATED_AT = "createdAt"
+        const val KEY_INCIDENT_DIALED_PHONE = "dialedPhone"
+        const val KEY_INCIDENT_DIALED_LABEL = "dialedContactLabel"
         const val KEY_CODE = "code"
         const val KEY_EXPIRES_AT = "expiresAt"
         const val KEY_USED_AT = "usedAt"
@@ -358,5 +565,8 @@ class MvpRepository(
         const val KEY_BATTERY_PERCENT = "batteryPercent"
         const val KEY_CHARGING = "charging"
         const val KEY_LAST_HEARTBEAT_AT = "lastHeartbeatAt"
+        const val KEY_STATUS_UPDATED_AT = "lastUpdatedAt"
+        const val KEY_NETWORK_TYPE = "networkType"
+        const val KEY_NETWORK_LABEL = "networkLabel"
     }
 }

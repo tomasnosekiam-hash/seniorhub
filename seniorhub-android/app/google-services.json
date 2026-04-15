@@ -12,7 +12,20 @@
           "package_name": "com.seniorhub.os"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1080402933620-ugpb5iqe0ed778ahgc323b9grbjngpfk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.seniorhub.os",
+            "certificate_hash": "34d82e9e28c0e7bcfbb033650df16be13fae4d5b"
+          }
+        },
+        {
+          "client_id": "1080402933620-n8gsmoqv20r6eb7akh743r70843lho20.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCBKUIMmRxEaQIaMO0KpqosL4A_RX4jDd8"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1080402933620-n8gsmoqv20r6eb7akh743r70843lho20.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

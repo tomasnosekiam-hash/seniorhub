@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
 }
+
+val localProperties = Properties().apply {
+    val lp = rootProject.file("local.properties")
+    if (lp.exists()) lp.inputStream().use { load(it) }
+}
+val picovoiceAccessKey: String =
+    localProperties.getProperty("picovoice.access.key", "").orEmpty()
 
 android {
     namespace = "com.seniorhub.os"
@@ -15,6 +24,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0-mvp"
+        val esc = picovoiceAccessKey.replace("\\", "\\\\").replace("\"", "\\\"")
+        buildConfigField("String", "PICOVOICE_ACCESS_KEY", "\"$esc\"")
     }
 
     buildTypes {
@@ -66,7 +77,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-installations-ktx")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
+    implementation("ai.picovoice:porcupine-android:3.0.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

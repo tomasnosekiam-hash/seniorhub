@@ -9,24 +9,31 @@ import com.seniorhub.os.data.DeviceConfig
 import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
 import com.seniorhub.os.data.MvpRepository
+import com.seniorhub.os.data.OpenMeteoWeather
+import com.seniorhub.os.util.readActiveNetworkSummary
 import com.seniorhub.os.util.readBatteryStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 private const val HEARTBEAT_INTERVAL_MS = 3 * 60 * 1000L
+private const val WEATHER_REFRESH_MS = 30 * 60 * 1000L
 
 data class HomeUiState(
     val loading: Boolean = true,
     val device: DeviceSettings? = null,
     val deviceConfig: DeviceConfig? = null,
     val contacts: List<Contact> = emptyList(),
-    /** Nejnovější nepřečtený vzkaz (seznam na serveru je řazen podle `createdAt` sestupně). */
+    /** Nejnovější nepřečtený vzkaz od rodiny (ne odchozí z tabletu). */
     val unreadMessage: DeviceMessage? = null,
+    /** Všechny zprávy z Firestore (sestupně podle `createdAt`). */
+    val messages: List<DeviceMessage> = emptyList(),
+    val weatherLine: String? = null,
     val showPairingSheet: Boolean = false,
     val showKioskUnlock: Boolean = false,
     val kioskUnlockError: String? = null,
@@ -49,9 +56,30 @@ class HomeViewModel(
             while (isActive) {
                 runCatching {
                     val status = readBatteryStatus(getApplication())
-                    repository.postDeviceHeartbeat(status.percent, status.charging)
+                    val (netType, netLabel) = readActiveNetworkSummary(getApplication())
+                    repository.postDeviceHeartbeat(
+                        status.percent,
+                        status.charging,
+                        networkType = netType,
+                        networkLabel = netLabel,
+                    )
                 }
                 delay(HEARTBEAT_INTERVAL_MS)
+            }
+        }
+        viewModelScope.launch {
+            runCatching {
+                OpenMeteoWeather.fetchCurrentSummary().getOrNull()?.let { line ->
+                    _state.update { it.copy(weatherLine = line) }
+                }
+            }
+            while (isActive) {
+                delay(WEATHER_REFRESH_MS)
+                runCatching {
+                    OpenMeteoWeather.fetchCurrentSummary().getOrNull()?.let { line ->
+                        _state.update { it.copy(weatherLine = line) }
+                    }
+                }
             }
         }
         viewModelScope.launch {
@@ -74,6 +102,8 @@ class HomeViewModel(
                         deviceConfig = null,
                         contacts = emptyList(),
                         unreadMessage = null,
+                        messages = emptyList(),
+                        weatherLine = null,
                         showPairingSheet = false,
                         showKioskUnlock = false,
                         kioskUnlockError = null,
@@ -82,13 +112,20 @@ class HomeViewModel(
                 } else {
                     val device = deviceResult.getOrNull()
                     val messages = messagesResult.getOrElse { emptyList() }
-                    val unread = messages.firstOrNull { it.readAt == null && it.body.isNotBlank() }
+                    // Jen vzkazy z webu (bez `delivery`) — ne odchozí z tabletu ani příchozí SMS.
+                    val unread = messages.firstOrNull {
+                        it.readAt == null &&
+                            it.body.isNotBlank() &&
+                            it.delivery.isNullOrBlank()
+                    }
                     HomeUiState(
                         loading = false,
                         device = device,
                         deviceConfig = configResult.getOrNull(),
                         contacts = contactsResult.getOrElse { emptyList() },
                         unreadMessage = unread,
+                        messages = messages,
+                        weatherLine = _state.value.weatherLine,
                         showPairingSheet = device?.paired != true,
                         showKioskUnlock = false,
                         kioskUnlockError = null,
@@ -117,6 +154,21 @@ class HomeViewModel(
         val id = _state.value.unreadMessage?.id ?: return
         viewModelScope.launch {
             runCatching { repository.markMessageRead(id) }
+        }
+    }
+
+    /**
+     * Tablet bez mobilní SMS — záznam do Firestore (rodina ve webu); viz [com.seniorhub.os.data.MvpRepository.sendTabletFirestoreMessage].
+     */
+    fun sendTabletFirestoreMessage(contact: Contact, body: String, onDone: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            onDone(runCatching { repository.sendTabletFirestoreMessage(contact, body) })
+        }
+    }
+
+    fun recordOutboundCellularSms(contact: Contact, body: String, onDone: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            onDone(runCatching { repository.recordOutboundCellularSms(contact, body) })
         }
     }
 

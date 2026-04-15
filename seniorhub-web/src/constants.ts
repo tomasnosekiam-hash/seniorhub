@@ -4,6 +4,12 @@ export const PAIRING_COLLECTION = 'pairingClaims'
 export const SUB_CONTACTS = 'contacts'
 export const SUB_MESSAGES = 'messages'
 export const SUB_CONFIG = 'config'
+/** Provozní stav (síť, zrcadlo heartbeatu) — viz tablet `postDeviceHeartbeat`. */
+export const SUB_STATUS = 'status'
+export const STATUS_DOC_ID = 'main'
+export const KEY_NETWORK_TYPE = 'networkType'
+export const KEY_NETWORK_LABEL = 'networkLabel'
+export const KEY_STATUS_UPDATED_AT = 'lastUpdatedAt'
 /** Jeden dokument s provozním nastavením tabletu (PIN, SIM, asistent). */
 export const CONFIG_DOC_ID = 'main'
 
@@ -45,3 +51,9 @@ export const KEY_MESSAGE_CREATED_AT = 'createdAt'
 export const KEY_MESSAGE_READ_AT = 'readAt'
 export const KEY_SENDER_UID = 'senderUid'
 export const KEY_SENDER_DISPLAY_NAME = 'senderDisplayName'
+/** `tablet_firestore` = náhrada SMS z tabletu bez SIM (Firebase), jinak z webu nevyplňovat. */
+export const KEY_MESSAGE_DELIVERY = 'delivery'
+export const KEY_MESSAGE_OUTBOUND_PHONE = 'outbound_phone'
+export const KEY_MESSAGE_OUTBOUND_NAME = 'outbound_name'
+export const KEY_MESSAGE_INBOUND_FROM_PHONE = 'inbound_from_phone'
+export const KEY_MESSAGE_INBOUND_FROM_NAME = 'inbound_from_name'

@@ -1,5 +1,16 @@
 <resources>
+    <!-- OAuth 2.0 Web client ID z Firebase Console (Project settings → Your apps → Web, nebo Authentication → Google). Po vyplnění stáhni znovu google-services.json. -->
+    <string name="default_web_client_id" translatable="false">1080402933620-n8gsmoqv20r6eb7akh743r70843lho20.apps.googleusercontent.com</string>
     <string name="app_name">SeniorHub MVP</string>
     <string name="notification_channel_messages_name">Vzkazy od rodiny</string>
     <string name="notification_channel_messages_desc">Upozornění na nový vzkaz z webové administrace</string>
+    <string name="notification_new_message_title">Nový vzkaz</string>
+    <string name="notification_new_message_fallback">Nový vzkaz od rodiny</string>
+    <string name="kiosk_home_hint">Kiosk: v nastavení tabletu zvol tuto aplikaci jako výchozí domovskou obrazovku (Domovská aplikace), ať tlačítko Domů vždy vrátí SeniorHub.</string>
+    <string name="notification_channel_matej_name">Asistent Matěj</string>
+    <string name="notification_channel_matej_desc">Naslouchání jménu asistenta na tabletu (režim Senior)</string>
+    <string name="matej_notification_title">Matěj</string>
+    <string name="matej_notification_text">Naslouchání… řekněte jméno asistenta (např. Matěji).</string>
+    <string name="matej_tts_emergency_generic">Volám nouzový kontakt. Senior potřebuje pomoc.</string>
+    <string name="matej_tts_emergency_named">Volám nouzový kontakt. %1$s potřebuje pomoc.</string>
 </resources>

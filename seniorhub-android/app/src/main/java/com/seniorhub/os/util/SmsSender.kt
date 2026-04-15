@@ -19,6 +19,11 @@ object SmsSender {
 
         return try {
             val sm = smsManager(context)
+                ?: return Result.failure(
+                    IllegalStateException(
+                        "SMS na tomto zařízení není k dispozici (SmsManager). Zkus jiné zařízení nebo SIM.",
+                    ),
+                )
             @Suppress("DEPRECATION")
             val parts = sm.divideMessage(text)
             if (parts.size <= 1) {
@@ -33,12 +38,15 @@ object SmsSender {
         }
     }
 
-    private fun smsManager(context: Context): SmsManager {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            context.getSystemService(SmsManager::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            SmsManager.getDefault()
+    /**
+     * [Context.getSystemService] pro [SmsManager] je od API 31 preferovaná cesta, ale na emulátoru
+     * nebo bez telefonního subsystému může vrátit **null** — pak použijeme [SmsManager.getDefault].
+     */
+    private fun smsManager(context: Context): SmsManager? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            context.getSystemService(SmsManager::class.java)?.let { return it }
         }
+        @Suppress("DEPRECATION")
+        return SmsManager.getDefault()
     }
 }
