@@ -36,4 +36,16 @@ Každá významná etapa má vlastní soubor `YYYY-MM-DD-kratky-nazev.md`. **Akt
 | [`2026-04-16-inbound-sms-fcm-roles-web-viewer.md`](2026-04-16-inbound-sms-fcm-roles-web-viewer.md) | Příchozí SMS do vlákna, deploy rules/functions, viewer v rules, FCM bez spamu správcům, web párování viewer |
 | [`2026-04-16-android-matej-incidents-porcupine-fcm.md`](2026-04-16-android-matej-incidents-porcupine-fcm.md) | Matěj: foreground služba, Porcupine/STT, `devices/.../incidents`, rules, `notifyAdminsOnMatejIncident`, deploy |
 
+## 2026-04-17
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-17-fcm-emergency-channel-functions-maint.md`](2026-04-17-fcm-emergency-channel-functions-maint.md) | Nouzový notif. kanál `emergency_incidents` (Android + FCM payload), refaktoring functions, Node 22 |
+
+## Plán (refaktoring bez změny chování)
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-18-home-screen-refactor-plan.md`](2026-04-18-home-screen-refactor-plan.md) | Rozdělení velkého `HomeScreen.kt` — navrhované soubory, pořadí kroků, testy |
+
 Pro **nejnovější etapu** použij soubor s **nejvyšším datem** v názvu; při stejném datu rozhoduje čas poslední úpravy souboru (viz `PROJECT_CONTEXT.md`).

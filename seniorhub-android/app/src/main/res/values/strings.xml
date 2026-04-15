@@ -9,6 +9,8 @@
     <string name="kiosk_home_hint">Kiosk: v nastavení tabletu zvol tuto aplikaci jako výchozí domovskou obrazovku (Domovská aplikace), ať tlačítko Domů vždy vrátí SeniorHub.</string>
     <string name="notification_channel_matej_name">Asistent Matěj</string>
     <string name="notification_channel_matej_desc">Naslouchání jménu asistenta na tabletu (režim Senior)</string>
+    <string name="notification_channel_emergency_name">Nouzové volání (Matěj)</string>
+    <string name="notification_channel_emergency_desc">Upozornění, když senior spustí nouzovou sekvenci přes asistenta Matěje</string>
     <string name="matej_notification_title">Matěj</string>
     <string name="matej_notification_text">Naslouchání… řekněte jméno asistenta (např. Matěji).</string>
     <string name="matej_tts_emergency_generic">Volám nouzový kontakt. Senior potřebuje pomoc.</string>

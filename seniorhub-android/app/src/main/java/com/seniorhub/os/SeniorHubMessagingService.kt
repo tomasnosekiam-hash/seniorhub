@@ -22,7 +22,8 @@ import kotlinx.coroutines.tasks.await
  * Obnovení FCM tokenu na dokumentu zařízení.
  *
  * Cloud Functions posílají FCM s `notification` + `data`. Když je aplikace **v popředí**,
- * systém notifikaci v liště **nezobrazí** — zobrazíme ji zde (stejný kanál jako systém v pozadí).
+ * systém notifikaci v liště **nezobrazí** — zobrazíme ji zde (stejný `channelId` jako u doručení na pozadí:
+ * vzkazy [SeniorHubApp.CHANNEL_ID_MESSAGES], incident Matěje [SeniorHubApp.CHANNEL_ID_EMERGENCY_INCIDENT]).
  * Překryv „Vzkaz od rodiny“ dál řeší realtime Firestore v [com.seniorhub.os.ui.HomeViewModel].
  */
 class SeniorHubMessagingService : FirebaseMessagingService() {
@@ -80,14 +81,23 @@ class SeniorHubMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(message)
         val data = message.data
         val t = data["type"] ?: return
-        if (t != "new_message" && t != "new_message_admin_copy") return
-
-        val title = message.notification?.title?.trim()?.takeIf { it.isNotEmpty() }
-            ?: getString(R.string.notification_new_message_title)
-        val body = message.notification?.body?.trim()?.takeIf { it.isNotEmpty() }
-            ?: getString(R.string.notification_new_message_fallback)
-
-        showForegroundAwareMessageNotification(title, body)
+        when (t) {
+            "new_message", "new_message_admin_copy" -> {
+                val title = message.notification?.title?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: getString(R.string.notification_new_message_title)
+                val body = message.notification?.body?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: getString(R.string.notification_new_message_fallback)
+                showForegroundAwareMessageNotification(title, body)
+            }
+            "matej_incident" -> {
+                val title = message.notification?.title?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: getString(R.string.notification_channel_emergency_name)
+                val body = message.notification?.body?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: ""
+                showForegroundAwareIncidentNotification(title, body)
+            }
+            else -> return
+        }
     }
 
     private fun showForegroundAwareMessageNotification(title: String, body: String) {
@@ -116,8 +126,35 @@ class SeniorHubMessagingService : FirebaseMessagingService() {
         nm.notify(NOTIFICATION_ID_INCOMING_MESSAGE, notification)
     }
 
+    private fun showForegroundAwareIncidentNotification(title: String, body: String) {
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pending = PendingIntent.getActivity(
+            this,
+            REQUEST_CODE_INCIDENT_TAP,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val notification = NotificationCompat.Builder(this, SeniorHubApp.CHANNEL_ID_EMERGENCY_INCIDENT)
+            .setSmallIcon(R.drawable.ic_launcher_simple)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setAutoCancel(true)
+            .setContentIntent(pending)
+            .build()
+        nm.notify(NOTIFICATION_ID_MATEJ_INCIDENT, notification)
+    }
+
     companion object {
         private const val NOTIFICATION_ID_INCOMING_MESSAGE = 71001
+        private const val NOTIFICATION_ID_MATEJ_INCIDENT = 71002
         private const val REQUEST_CODE_MESSAGE_TAP = 1
+        private const val REQUEST_CODE_INCIDENT_TAP = 2
     }
 }

@@ -1,41 +1,13 @@
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { getAdminFcmTokens } from "./adminFcmTokens";
+import {
+  CHANNEL_ID_EMERGENCY_INCIDENT,
+  CHANNEL_ID_MESSAGES,
+} from "./fcmConstants";
 
 admin.initializeApp();
-
-const CHANNEL_ID = "family_messages";
-
-async function getAdminFcmTokens(
-  deviceId: string,
-  excludeUid: string,
-): Promise<string[]> {
-  const joins = await admin
-    .firestore()
-    .collection("deviceAdmins")
-    .where("deviceId", "==", deviceId)
-    .get();
-  const tokens: string[] = [];
-  for (const j of joins.docs) {
-    const uid = String(j.get("uid") ?? "");
-    if (!uid || uid === excludeUid) {
-      continue;
-    }
-    const tokenSnap = await admin
-      .firestore()
-      .collection("users")
-      .doc(uid)
-      .collection("fcmTokens")
-      .get();
-    for (const t of tokenSnap.docs) {
-      const tok = String(t.get("token") ?? "");
-      if (tok) {
-        tokens.push(tok);
-      }
-    }
-  }
-  return tokens;
-}
 
 export const notifyTabletOnNewMessage = onDocumentCreated(
   {
@@ -73,7 +45,7 @@ export const notifyTabletOnNewMessage = onDocumentCreated(
               notification: {
                 title: "Nový vzkaz",
                 body: preview,
-                channelId: CHANNEL_ID,
+                channelId: CHANNEL_ID_MESSAGES,
               },
             },
             data: {
@@ -110,7 +82,7 @@ export const notifyTabletOnNewMessage = onDocumentCreated(
               notification: {
                 title: `Vzkaz · ${deviceLabel}`,
                 body: preview,
-                channelId: CHANNEL_ID,
+                channelId: CHANNEL_ID_MESSAGES,
               },
             },
             data: {
@@ -162,7 +134,7 @@ export const notifyAdminsOnMatejIncident = onDocumentCreated(
               notification: {
                 title: `Nouze · ${deviceLabel}`,
                 body: `Matěj: nouzové volání → ${preview}`,
-                channelId: CHANNEL_ID,
+                channelId: CHANNEL_ID_EMERGENCY_INCIDENT,
               },
             },
             data: {

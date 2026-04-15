@@ -37,12 +37,23 @@ class SeniorHubApp : Application() {
                 description = getString(R.string.notification_channel_matej_desc)
             }
             nm.createNotificationChannel(matej)
+            val emergency = NotificationChannel(
+                CHANNEL_ID_EMERGENCY_INCIDENT,
+                getString(R.string.notification_channel_emergency_name),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = getString(R.string.notification_channel_emergency_desc)
+                enableVibration(true)
+            }
+            nm.createNotificationChannel(emergency)
         }
     }
 
     companion object {
         const val CHANNEL_ID_MESSAGES = "family_messages"
         const val CHANNEL_ID_MATEJ = "matej_assistant"
+        /** FCM nouze od Matěje (správci); výchozí systémový zvuk kanálu. */
+        const val CHANNEL_ID_EMERGENCY_INCIDENT = "emergency_incidents"
     }
 }
 
