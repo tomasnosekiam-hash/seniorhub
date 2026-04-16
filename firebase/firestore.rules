@@ -64,6 +64,15 @@ service cloud.firestore {
           && (!resource.data.keys().hasAll(['deviceId']) || resource.data.deviceId == deviceId));
     }
 
+    /** Web po spárování zapisuje `paired` na `devices/{id}` — viewer jinak nesmí měnit dokument; tato výjimka je jen dokončení párování. */
+    function viewerCompletingPairing(deviceId) {
+      return isDeviceViewer(deviceId)
+        && resource != null
+        && (!('paired' in resource.data) || resource.data.paired == false)
+        && request.resource.data.paired == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paired', 'pairedAt']);
+    }
+
     function validPairingClaim(code, deviceId) {
       return code is string
         && exists(pairingPath(code))
@@ -82,7 +91,7 @@ service cloud.firestore {
         && request.resource.data.deviceId == deviceId;
 
       allow read: if canReadDeviceDoc(deviceId);
-      allow update: if canWriteDeviceDoc(deviceId);
+      allow update: if canWriteDeviceDoc(deviceId) || viewerCompletingPairing(deviceId);
       allow delete: if false;
 
       match /contacts/{contactId} {
@@ -185,14 +194,15 @@ service cloud.firestore {
         && request.resource.data.usedAt == null
         && request.resource.data.usedByUid == null;
 
+      // Jen dokončení párování (web): mění se pouze usedAt + usedByUid — diff je spolehlivější než != null u serverTimestamp.
       allow update: if signedIn()
         && resource.data.usedAt == null
         && resource.data.expiresAt > request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedAt', 'usedByUid'])
         && request.resource.data.deviceId == resource.data.deviceId
         && request.resource.data.deviceAuthUid == resource.data.deviceAuthUid
         && request.resource.data.code == resource.data.code
-        && request.resource.data.usedByUid == request.auth.uid
-        && request.resource.data.usedAt != null;
+        && request.resource.data.usedByUid == request.auth.uid;
 
       allow delete: if false;
     }

@@ -27,7 +27,7 @@ data class DeviceSettings(
     val networkLabel: String? = null,
 )
 
-/** `devices/{id}/config/main` — admin PIN, SIM, asistent, profil seniora (senior / kiosk). */
+/** `devices/{id}/config/main` — admin PIN, SIM, volitelné `assistant_name` (legacy), profil seniora. */
 data class DeviceConfig(
     val adminPin: String,
     val simNumber: String,

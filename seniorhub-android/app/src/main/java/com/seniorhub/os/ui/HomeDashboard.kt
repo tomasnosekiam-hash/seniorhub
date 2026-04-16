@@ -1,36 +1,61 @@
 package com.seniorhub.os.ui
 
 import android.content.res.Configuration
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seniorhub.os.BuildConfig
@@ -39,12 +64,19 @@ import com.seniorhub.os.data.Contact
 import com.seniorhub.os.data.DeviceConfig
 import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
-import com.seniorhub.os.matej.MatejForegroundService
 import com.seniorhub.os.ui.theme.SeniorHubTheme
 import com.seniorhub.os.util.normalizePhoneForDial
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
+/** Nad touto šířkou jsou přehled a kontakty vedle sebe; pod ní jeden sloupec (např. úzký režim / telefon). */
+private val DashboardTwoPaneMinWidth: Dp = 840.dp
+
+/**
+ * Domovský dashboard (Senior / kiosk): M3 [Surface] / [Card], typografie z tématu, jemné přechody při načtení.
+ */
 @Composable
 fun HomeScreen(
     state: HomeUiState,
@@ -59,223 +91,465 @@ fun HomeScreen(
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
     onContactThread: (Contact) -> Unit,
+    onStartMatej: () -> Unit,
     showKioskLauncherHint: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     val familyMessagesPreview = remember(state.messages) {
         state.messages
             .filter { it.delivery.isNullOrBlank() }
             .take(5)
             .asReversed()
     }
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black),
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = scheme.background,
     ) {
-        if (state.loading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = Color(0xFFFFFF00),
-            )
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
+        Box(modifier = Modifier.fillMaxSize()) {
+            AnimatedContent(
+                targetState = state.loading,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(320)) togetherWith
+                        fadeOut(animationSpec = tween(180))
+                },
+                label = "dashboardLoad",
+            ) { loading ->
+                if (loading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(56.dp),
+                            color = scheme.primary,
+                            trackColor = scheme.surfaceContainerHighest,
+                            strokeWidth = 4.dp,
+                        )
+                    }
+                } else {
+                    HomeDashboardMain(
+                        state = state,
+                        familyMessagesPreview = familyMessagesPreview,
+                        showKioskLauncherHint = showKioskLauncherHint,
+                        onShowPairing = onShowPairing,
+                        onContactCall = onContactCall,
+                        onContactSms = onContactSms,
+                        onContactThread = onContactThread,
+                        onStartMatej = onStartMatej,
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = state.errorMessage != null,
+                enter = fadeIn(tween(280)) + slideInVertically(tween(280)) { full -> full / 3 },
+                exit = fadeOut(tween(200)) + slideOutVertically(tween(200)) { full -> full / 3 },
+                modifier = Modifier.align(Alignment.BottomCenter),
             ) {
-                StatusColumn(
-                    device = state.device,
-                    deviceConfig = state.deviceConfig,
-                    weatherLine = state.weatherLine,
-                    familyMessages = familyMessagesPreview,
-                    showKioskLauncherHint = showKioskLauncherHint,
-                    onShowPairing = onShowPairing,
+                val msg = state.errorMessage ?: return@AnimatedVisibility
+                Surface(
                     modifier = Modifier
-                        .weight(0.38f)
-                        .fillMaxSize(),
-                )
-                ContactsColumn(
-                    contacts = state.contacts,
-                    onContactCall = onContactCall,
-                    onContactSms = onContactSms,
-                    onContactThread = onContactThread,
-                    modifier = Modifier
-                        .weight(0.62f)
-                        .fillMaxSize(),
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = MaterialTheme.shapes.large,
+                    color = scheme.errorContainer,
+                    shadowElevation = 6.dp,
+                ) {
+                    Text(
+                        text = stringResource(R.string.dashboard_connection_error, msg),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = scheme.onErrorContainer,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                    )
+                }
+            }
+
+            val alert = state.device?.alertMessage
+            if (!alert.isNullOrBlank()) {
+                AlertOverlay(message = alert, onDismiss = onDismissAlert)
+            }
+
+            val device = state.device
+            if (device != null && state.showPairingSheet) {
+                PairingOverlay(
+                    device = device,
+                    onRefreshPairing = onRefreshPairing,
+                    onClose = onHidePairing,
                 )
             }
-        }
 
-        state.errorMessage?.let { msg ->
-            Text(
-                text = "Spojení: $msg",
-                color = Color(0xFFFF6666),
-                fontSize = 18.sp,
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
+                    .align(Alignment.TopStart)
+                    .size(100.dp)
+                    .clickable(onClick = onKioskSecretTap),
             )
-        }
 
-        val alert = state.device?.alertMessage
-        if (!alert.isNullOrBlank()) {
-            AlertOverlay(message = alert, onDismiss = onDismissAlert)
-        }
+            if (state.showKioskUnlock) {
+                KioskUnlockOverlay(
+                    errorMessage = state.kioskUnlockError,
+                    onDismiss = onDismissKioskUnlock,
+                    onSubmit = onSubmitKioskPin,
+                )
+            }
 
-        val device = state.device
-        if (device != null && state.showPairingSheet) {
-            PairingOverlay(
-                device = device,
-                onRefreshPairing = onRefreshPairing,
-                onClose = onHidePairing,
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .size(100.dp)
-                .clickable(onClick = onKioskSecretTap),
-        )
-
-        if (state.showKioskUnlock) {
-            KioskUnlockOverlay(
-                errorMessage = state.kioskUnlockError,
-                onDismiss = onDismissKioskUnlock,
-                onSubmit = onSubmitKioskPin,
-            )
-        }
-
-        state.unreadMessage?.let { msg ->
-            MessageOverlay(message = msg, onDismiss = onDismissUnreadMessage)
-        }
-
-        if (BuildConfig.DEBUG) {
-            TextButton(
-                onClick = { MatejForegroundService.triggerTestEmergency(context) },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(12.dp),
-            ) {
-                Text("Test nouze · DBG", color = Color(0xFFFF8888), fontSize = 13.sp)
+            state.unreadMessage?.let { msg ->
+                MessageOverlay(message = msg, onDismiss = onDismissUnreadMessage)
             }
         }
     }
 }
 
 @Composable
-private fun StatusColumn(
+private fun HomeDashboardMain(
+    state: HomeUiState,
+    familyMessagesPreview: List<DeviceMessage>,
+    showKioskLauncherHint: Boolean,
+    onShowPairing: () -> Unit,
+    onContactCall: (String) -> Unit,
+    onContactSms: (Contact) -> Unit,
+    onContactThread: (Contact) -> Unit,
+    onStartMatej: () -> Unit,
+) {
+    var clock by remember { mutableStateOf(LocalTime.now()) }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            clock = LocalTime.now()
+            delay(60_000L)
+        }
+    }
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp, vertical = 20.dp),
+    ) {
+        val buildFingerprint = remember {
+            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) · ${BuildConfig.BUILD_MARK} · ${BuildConfig.BUILD_STAMP}"
+        }
+        val stacked = maxWidth < DashboardTwoPaneMinWidth
+        if (stacked) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                dashboardOverviewItems(
+                    clock = clock,
+                    device = state.device,
+                    deviceConfig = state.deviceConfig,
+                    weatherLine = state.weatherLine,
+                    familyMessages = familyMessagesPreview,
+                    showKioskLauncherHint = showKioskLauncherHint,
+                    onShowPairing = onShowPairing,
+                    onStartMatej = onStartMatej,
+                )
+                item {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = stringResource(R.string.dashboard_contacts),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                contactListItems(
+                    contacts = state.contacts,
+                    onContactCall = onContactCall,
+                    onContactSms = onContactSms,
+                    onContactThread = onContactThread,
+                )
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(0.38f)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    dashboardOverviewItems(
+                        clock = clock,
+                        device = state.device,
+                        deviceConfig = state.deviceConfig,
+                        weatherLine = state.weatherLine,
+                        familyMessages = familyMessagesPreview,
+                        showKioskLauncherHint = showKioskLauncherHint,
+                        onShowPairing = onShowPairing,
+                        onStartMatej = onStartMatej,
+                    )
+                }
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(0.62f)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.dashboard_contacts),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    contactListItems(
+                        contacts = state.contacts,
+                        onContactCall = onContactCall,
+                        onContactSms = onContactSms,
+                        onContactThread = onContactThread,
+                    )
+                }
+            }
+        }
+        // Dole vlevo — vpravo je v DEBUG překrytý FAB „M“, proto dřív nebylo nic vidět.
+        Surface(
+            modifier = Modifier.align(Alignment.BottomStart),
+            shape = MaterialTheme.shapes.extraSmall,
+            tonalElevation = 2.dp,
+            shadowElevation = 4.dp,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            Text(
+                text = buildFingerprint,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                lineHeight = 16.sp,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+private fun LazyListScope.dashboardOverviewItems(
+    clock: LocalTime,
     device: DeviceSettings?,
     deviceConfig: DeviceConfig?,
     weatherLine: String?,
     familyMessages: List<DeviceMessage>,
     showKioskLauncherHint: Boolean,
     onShowPairing: () -> Unit,
-    modifier: Modifier = Modifier,
+    onStartMatej: () -> Unit,
 ) {
     val seniorDisplay = listOfNotNull(
         deviceConfig?.seniorFirstName?.trim()?.takeIf { it.isNotEmpty() },
         deviceConfig?.seniorLastName?.trim()?.takeIf { it.isNotEmpty() },
     ).joinToString(" ")
     val address = deviceConfig?.addressLine?.trim().orEmpty()
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    item {
+        val scheme = MaterialTheme.colorScheme
         Text(
-            text = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")),
-            color = Color.White,
-            fontSize = 72.sp,
-            fontWeight = FontWeight.Bold,
+            text = stringResource(R.string.dashboard_section_overview),
+            style = MaterialTheme.typography.headlineSmall,
+            color = scheme.primary,
         )
+    }
+    item {
+        val scheme = MaterialTheme.colorScheme
         Text(
-            text = device?.deviceLabel ?: "Tablet",
-            color = Color(0xFFFFFF00),
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Medium,
+            text = clock.format(DateTimeFormatter.ofPattern("HH:mm")),
+            style = MaterialTheme.typography.displayLarge,
+            color = scheme.onBackground,
         )
-        if (seniorDisplay.isNotBlank()) {
+    }
+    item {
+        val scheme = MaterialTheme.colorScheme
+        Text(
+            text = device?.deviceLabel ?: stringResource(R.string.device_label_fallback),
+            style = MaterialTheme.typography.headlineMedium,
+            color = scheme.primary,
+        )
+    }
+    if (seniorDisplay.isNotBlank()) {
+        item {
+            val scheme = MaterialTheme.colorScheme
             Text(
-                text = "Senior: $seniorDisplay",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Medium,
+                text = stringResource(R.string.dashboard_senior_label, seniorDisplay),
+                style = MaterialTheme.typography.titleLarge,
+                color = scheme.onBackground,
             )
         }
-        if (address.isNotBlank()) {
+    }
+    if (address.isNotBlank()) {
+        item {
+            val scheme = MaterialTheme.colorScheme
             Text(
                 text = address,
-                color = Color.White.copy(alpha = 0.88f),
-                fontSize = 18.sp,
+                style = MaterialTheme.typography.bodyLarge,
+                color = scheme.onSurfaceVariant,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+    item {
+        val scheme = MaterialTheme.colorScheme
         Text(
-            text = "ID zařízení: ${device?.deviceId ?: "—"}",
-            color = Color.White.copy(alpha = 0.82f),
-            fontSize = 18.sp,
+            text = stringResource(
+                R.string.dashboard_device_id,
+                device?.deviceId ?: "—",
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = scheme.onSurfaceVariant,
         )
+    }
+    item {
+        val scheme = MaterialTheme.colorScheme
         Text(
-            text = "Hlasitost (nastavení z webu): ${device?.volumePercent ?: "—"} %",
-            color = Color.White,
-            fontSize = 22.sp,
+            text = stringResource(
+                R.string.dashboard_volume_remote,
+                device?.volumePercent?.toString() ?: "—",
+            ),
+            style = MaterialTheme.typography.titleMedium,
+            color = scheme.onBackground,
         )
-        weatherLine?.let { line ->
-            Text(
-                text = line,
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 20.sp,
-            )
-        }
-        device?.networkLabel?.let { net ->
-            Text(
-                text = "Síť: $net",
-                color = Color.White.copy(alpha = 0.88f),
-                fontSize = 18.sp,
-            )
-        }
-        if (showKioskLauncherHint) {
-            Text(
-                text = stringResource(R.string.kiosk_home_hint),
-                color = Color(0xFFFFCC66),
-                fontSize = 16.sp,
-                lineHeight = 22.sp,
-            )
-        }
-        if (familyMessages.isNotEmpty()) {
-            Text(
-                text = "Vzkazy od rodiny (na celý tablet)",
-                color = Color(0xFFFFFF00),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            familyMessages.forEach { m ->
+    }
+    weatherLine?.let { line ->
+        item {
+            val scheme = MaterialTheme.colorScheme
+            Card(
+                colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainer),
+                shape = MaterialTheme.shapes.medium,
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            ) {
                 Text(
-                    text = "[Rodina] ${m.senderDisplayName ?: "—"}: ${m.body}",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 16.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
+                    text = line,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = scheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
+        }
+    }
+    if (device?.paired == true) {
+        item {
+            val scheme = MaterialTheme.colorScheme
+            Card(
+                colors = CardDefaults.cardColors(containerColor = scheme.secondaryContainer),
+                shape = MaterialTheme.shapes.large,
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.SmartToy,
+                            contentDescription = null,
+                            tint = scheme.primary,
+                            modifier = Modifier.size(28.dp),
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = stringResource(R.string.dashboard_matej_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = scheme.onSecondaryContainer,
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.dashboard_matej_subtitle),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = scheme.onSecondaryContainer.copy(alpha = 0.92f),
+                    )
+                    FilledTonalButton(
+                        onClick = onStartMatej,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.dashboard_matej_button))
+                    }
+                }
+            }
+        }
+    }
+    device?.networkLabel?.let { net ->
+        item {
+            val scheme = MaterialTheme.colorScheme
             Text(
-                text = "U kontaktu klepni „Vlákno“ — zobrazí se odchozí zprávy (cloud i SMS).",
-                color = Color.White.copy(alpha = 0.55f),
-                fontSize = 14.sp,
+                text = stringResource(R.string.dashboard_network, net),
+                style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant,
             )
         }
-        device?.batteryPercent?.let { pct ->
+    }
+    if (showKioskLauncherHint) {
+        item {
+            val scheme = MaterialTheme.colorScheme
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = scheme.tertiaryContainer,
+            ) {
+                Text(
+                    text = stringResource(R.string.kiosk_home_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onTertiaryContainer,
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.15f,
+                    modifier = Modifier.padding(14.dp),
+                )
+            }
+        }
+    }
+    if (familyMessages.isNotEmpty()) {
+        item {
+            val scheme = MaterialTheme.colorScheme
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.dashboard_family_messages_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = scheme.primary,
+                )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainer),
+                    shape = MaterialTheme.shapes.large,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        familyMessages.forEach { m ->
+                            Text(
+                                text = "[Rodina] ${m.senderDisplayName ?: "—"}: ${m.body}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = scheme.onSurface.copy(alpha = 0.92f),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        HorizontalDivider(color = scheme.outlineVariant)
+                        Text(
+                            text = stringResource(R.string.dashboard_family_messages_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = scheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+    device?.batteryPercent?.let { pct ->
+        item {
+            val scheme = MaterialTheme.colorScheme
+            val batText = if (device.charging) {
+                stringResource(R.string.dashboard_battery_charging, pct)
+            } else {
+                stringResource(R.string.dashboard_battery, pct)
+            }
             Text(
-                text = buildString {
-                    append("Baterie: $pct %")
-                    if (device.charging) append(" · nabíjení")
-                },
-                color = Color.White.copy(alpha = 0.92f),
-                fontSize = 20.sp,
+                text = batText,
+                style = MaterialTheme.typography.titleMedium,
+                color = scheme.onSurface,
             )
         }
-        if (device != null) {
+    }
+    if (device != null) {
+        item {
             PairingSummaryCard(
                 paired = device.paired,
                 pairingCode = device.pairingCode,
@@ -286,45 +560,42 @@ private fun StatusColumn(
     }
 }
 
-@Composable
-private fun ContactsColumn(
+private fun LazyListScope.contactListItems(
     contacts: List<Contact>,
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
     onContactThread: (Contact) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = "Kontakty",
-            color = Color(0xFFFFFF00),
-            fontSize = 26.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            if (contacts.isEmpty()) {
-                item {
-                    Text(
-                        text = "Zatím žádné — přidej je z webové administrace.",
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 20.sp,
-                    )
-                }
-            } else {
-                items(contacts, key = { it.id }) { c ->
-                    ContactRow(
-                        contact = c,
-                        onCall = {
-                            if (c.phone.isNotBlank()) onContactCall(c.phone)
-                        },
-                        onSms = { onContactSms(c) },
-                        onThread = { onContactThread(c) },
-                    )
-                }
+    if (contacts.isEmpty()) {
+        item {
+            Text(
+                text = stringResource(R.string.dashboard_no_contacts),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    } else {
+        itemsIndexed(
+            contacts,
+            key = { _, c -> c.id },
+        ) { index, c ->
+            var revealed by remember(c.id) { mutableStateOf(false) }
+            LaunchedEffect(c.id) {
+                delay((index * 42L).coerceAtMost(420L))
+                revealed = true
+            }
+            AnimatedVisibility(
+                visible = revealed,
+                enter = fadeIn(animationSpec = tween(260)),
+            ) {
+                ContactRow(
+                    contact = c,
+                    onCall = {
+                        if (c.phone.isNotBlank()) onContactCall(c.phone)
+                    },
+                    onSms = { onContactSms(c) },
+                    onThread = { onContactThread(c) },
+                )
             }
         }
     }
@@ -336,79 +607,134 @@ private fun ContactRow(
     onCall: () -> Unit,
     onSms: () -> Unit,
     onThread: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val canCommunicate = contact.phone.isNotBlank() && normalizePhoneForDial(contact.phone) != null
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                if (contact.isEmergency) Color(0xFF2A1518) else Color(0xFF111111),
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+    val scheme = MaterialTheme.colorScheme
+    val cardColors = if (contact.isEmergency) {
+        CardDefaults.cardColors(
+            containerColor = scheme.errorContainer.copy(alpha = 0.55f),
+        )
+    } else {
+        CardDefaults.cardColors(containerColor = scheme.surfaceContainer)
+    }
+    val border = if (contact.isEmergency) {
+        BorderStroke(1.dp, scheme.error.copy(alpha = 0.65f))
+    } else {
+        null
+    }
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = cardColors,
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp,
+            pressedElevation = 4.dp,
+        ),
+        border = border,
     ) {
-        if (contact.isEmergency) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+        ) {
+            if (contact.isEmergency) {
+                Text(
+                    text = stringResource(R.string.contact_badge_emergency).uppercase(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = scheme.error,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+            }
             Text(
-                text = "NOUZE",
-                color = Color(0xFFFF6666),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                text = contact.name.ifEmpty { stringResource(R.string.contact_name_fallback) },
+                style = MaterialTheme.typography.titleLarge,
+                color = scheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(modifier = Modifier.height(4.dp))
-        }
-        Text(
-            text = contact.name.ifEmpty { "(bez jména)" },
-            color = Color.White,
-            fontSize = 22.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = contact.phone.ifEmpty { "—" },
-            color = Color.White.copy(alpha = 0.9f),
-            fontSize = 18.sp,
-        )
-        if (canCommunicate) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Button(
-                    onClick = onCall,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2A2A2A),
-                        contentColor = Color(0xFFFFFF00),
+            Text(
+                text = contact.phone.ifEmpty { "—" },
+                style = MaterialTheme.typography.bodyLarge,
+                color = scheme.onSurfaceVariant,
+            )
+            if (canCommunicate) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    FilledTonalButton(
+                        onClick = onCall,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 52.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = scheme.surfaceContainerHigh,
+                            contentColor = scheme.primary,
+                        ),
+                    ) {
+                        Icon(
+                            Icons.Filled.Call,
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            stringResource(R.string.contact_action_call),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = onSms,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 52.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = scheme.surfaceContainerHigh,
+                            contentColor = scheme.primary,
+                        ),
+                    ) {
+                        Icon(
+                            Icons.Filled.Sms,
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            stringResource(R.string.contact_action_sms),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onThread,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    border = BorderStroke(1.dp, scheme.outline),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = scheme.onSurface,
                     ),
                 ) {
-                    Text("Zavolat", fontSize = 18.sp)
+                    Icon(
+                        Icons.Filled.Forum,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.contact_action_thread),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
                 }
-                Button(
-                    onClick = onSms,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2A2A2A),
-                        contentColor = Color(0xFFFFFF00),
-                    ),
-                ) {
-                    Text("SMS", fontSize = 18.sp)
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onThread,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1A1A1A),
-                    contentColor = Color.White.copy(alpha = 0.92f),
-                ),
-            ) {
-                Text("Vlákno (zprávy s kontaktem)", fontSize = 17.sp)
             }
         }
     }
 }
+
 @Composable
 private fun PairingSummaryCard(
     paired: Boolean,
@@ -416,44 +742,102 @@ private fun PairingSummaryCard(
     expiresAtLabel: String?,
     onShowPairing: () -> Unit,
 ) {
-    Column(
+    val scheme = MaterialTheme.colorScheme
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF111111))
-            .clickable(onClick = onShowPairing)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .clickable(onClick = onShowPairing),
+        colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
-        Text(
-            text = if (paired) "Správci připojeni" else "Čeká na spárování",
-            color = Color(0xFFFFFF00),
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = if (paired) {
-                "Klepni sem pro přidání dalšího správce."
-            } else {
-                "Použij kód ve webové administraci."
-            },
-            color = Color.White,
-            fontSize = 18.sp,
-        )
-        if (!pairingCode.isNullOrBlank()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Text(
-                text = pairingCode,
-                color = Color.White,
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Bold,
+                text = if (paired) {
+                    stringResource(R.string.dashboard_pairing_connected)
+                } else {
+                    stringResource(R.string.dashboard_pairing_waiting)
+                },
+                style = MaterialTheme.typography.titleLarge,
+                color = scheme.primary,
             )
-        }
-        if (!expiresAtLabel.isNullOrBlank()) {
             Text(
-                text = "Platí do $expiresAtLabel",
-                color = Color.White.copy(alpha = 0.78f),
-                fontSize = 16.sp,
+                text = if (paired) {
+                    stringResource(R.string.dashboard_pairing_hint_connected)
+                } else {
+                    stringResource(R.string.dashboard_pairing_hint_waiting)
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = scheme.onSurface,
             )
+            if (!pairingCode.isNullOrBlank()) {
+                Text(
+                    text = pairingCode,
+                    style = MaterialTheme.typography.displayMedium,
+                    color = scheme.onBackground,
+                )
+            }
+            if (!expiresAtLabel.isNullOrBlank()) {
+                Text(
+                    text = stringResource(R.string.dashboard_pairing_expires, expiresAtLabel),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
         }
+    }
+}
+
+@Preview(name = "Úzký / jeden sloupec", widthDp = 400, heightDp = 780)
+@Composable
+private fun HomeScreenNarrowPreview() {
+    SeniorHubTheme {
+        HomeScreen(
+            state = HomeUiState(
+                loading = false,
+                device = DeviceSettings(
+                    deviceId = "narrow",
+                    deviceLabel = "Tablet",
+                    volumePercent = 80,
+                    alertMessage = null,
+                    paired = true,
+                    pairingCode = null,
+                    pairingExpiresAtLabel = null,
+                    batteryPercent = 100,
+                    charging = true,
+                    networkLabel = "5G",
+                ),
+                deviceConfig = DeviceConfig(
+                    adminPin = "",
+                    simNumber = "",
+                    assistantName = "",
+                    seniorFirstName = "Jan",
+                    seniorLastName = "",
+                    addressLine = "",
+                ),
+                contacts = listOf(
+                    Contact("1", "Dcera", "+420 777 000 111"),
+                ),
+                weatherLine = "Venku 12 °C",
+                errorMessage = null,
+            ),
+            onDismissAlert = {},
+            onDismissUnreadMessage = {},
+            onShowPairing = {},
+            onHidePairing = {},
+            onRefreshPairing = {},
+            onKioskSecretTap = {},
+            onDismissKioskUnlock = {},
+            onSubmitKioskPin = {},
+            onContactCall = {},
+            onContactSms = {},
+            onContactThread = {},
+            onStartMatej = {},
+            showKioskLauncherHint = false,
+        )
     }
 }
 
@@ -472,11 +856,23 @@ private fun HomeScreenPreview() {
                     paired = true,
                     pairingCode = "R5K8P2",
                     pairingExpiresAtLabel = "18:40",
+                    batteryPercent = 84,
+                    charging = false,
+                    networkLabel = "Wi‑Fi",
+                ),
+                deviceConfig = DeviceConfig(
+                    adminPin = "",
+                    simNumber = "",
+                    assistantName = "",
+                    seniorFirstName = "Marie",
+                    seniorLastName = "Nováková",
+                    addressLine = "Praha 4",
                 ),
                 contacts = listOf(
                     Contact("1", "Jana", "+420 777 111 222"),
-                    Contact("2", "Petr", "+420 603 333 444"),
+                    Contact("2", "Petr", "+420 603 333 444", isEmergency = true),
                 ),
+                weatherLine = "Venku 18 °C, polojasno",
                 errorMessage = null,
             ),
             onDismissAlert = {},
@@ -490,7 +886,8 @@ private fun HomeScreenPreview() {
             onContactCall = {},
             onContactSms = {},
             onContactThread = {},
-            showKioskLauncherHint = false,
+            onStartMatej = {},
+            showKioskLauncherHint = true,
         )
     }
 }
@@ -525,6 +922,7 @@ private fun HomeScreenAlertPreview() {
             onContactCall = {},
             onContactSms = {},
             onContactThread = {},
+            onStartMatej = {},
             showKioskLauncherHint = false,
         )
     }
@@ -547,6 +945,7 @@ private fun HomeScreenLoadingPreview() {
             onContactCall = {},
             onContactSms = {},
             onContactThread = {},
+            onStartMatej = {},
             showKioskLauncherHint = false,
         )
     }

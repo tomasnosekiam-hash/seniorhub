@@ -56,4 +56,82 @@ Každá významná etapa má vlastní soubor `YYYY-MM-DD-kratky-nazev.md`. **Akt
 |--------|------|
 | [`2026-04-20-matej-postwake-skills-natural-speech-plan.md`](2026-04-20-matej-postwake-skills-natural-speech-plan.md) | Matěj: dovednosti po probuzení (počasí, vzkaz, SMS, hovor); STT prompt; plán vrstvy přirozené řeči (Nano / cloud / heuristiky) |
 
+## 2026-04-21
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-21-tablet-reference-on-hand-verification.md`](2026-04-21-tablet-reference-on-hand-verification.md) | Referenční tablet Lenovo Idea Tab 11 5G u vývojáře — milník pro ladění na zařízení (kiosk, Matěj, oprávnění, AICore) |
+
+## 2026-04-22
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-22-pairing-ux-firestore-matej-stt-firebase-cli.md`](2026-04-22-pairing-ux-firestore-matej-stt-firebase-cli.md) | Web: pořadí sekcí párování, nápověda, kontrola existující vazby, batch včetně `paired`; Firestore: viewer dokončení párování, `pairingClaims` diff; Matěj: STT interval + tlumení pípání; Firebase CLI `activeProjects` / `firebase use` |
+
+## 2026-04-23
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-23-android-matej-postwake-dashboard-m3-responsive.md`](2026-04-23-android-matej-postwake-dashboard-m3-responsive.md) | Matěj: prázdný STT → `Unclear` (ne nouze), okno poslechu po probuzení, `CALL_PHONE` + TTS; `PhoneDialer` bez crash; Senior dashboard M3 (typografie, barvy, tvary), breakpoint 840 dp, stagger fade kontaktů, stringy |
+
+## 2026-04-24
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-24-android-remove-matej-voice-module.md`](2026-04-24-android-remove-matej-voice-module.md) | Android: odstranění hlasového asistenta (STT heuristiky, Porcupine, foreground služba, incidenty z tabletu); PIN/SIM admin bez úpravy jména asistenta |
+
+## 2026-04-25
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-25-matej-2-product-spec.md`](2026-04-25-matej-2-product-spec.md) | Matěj 2.0: produktová a UX spec (wake, Nano/Flash, potvrzení akcí, 5 s ticho, viditelné UI + kompaktní roh); bez STT smyčky a pípání — před implementací |
+
+## 2026-04-26
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-26-android-matej-assistant-ui-milestone.md`](2026-04-26-android-matej-assistant-ui-milestone.md) | Android: Matěj 2.0 první milník — overlay UI (rozšířený + kompaktní roh), náhled přes debug FAB „M“ |
+
+## 2026-04-27
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-27-android-matej-wake-listen-flow.md`](2026-04-27-android-matej-wake-listen-flow.md) | Android: Porcupine wake → TTS → STT 5 s → resume; `local.properties` Picovoice; volitelný `assets/porcupine/keyword.ppn` |
+
+## 2026-04-28
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-28-android-matej-2-heuristics-dashboard.md`](2026-04-28-android-matej-2-heuristics-dashboard.md) | Android: Matěj 2.0 — relace TTS → STT 5 s → heuristiky → TTS; karta „Spustit Matěje“ na dashboardu; sdílený tok s Porcupine wake |
+
+## 2026-04-29
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-29-android-matej-gemini-brain-confirmation.md`](2026-04-29-android-matej-gemini-brain-confirmation.md) | Matěj 2.0: MatejBrain, Gemini Flash + heuristiky; potvrzení SMS/hovoru (ano/ne); `gemini.api.key` v `local.properties` |
+
+## 2026-04-30
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-04-30-matej-device-verification-and-ai-clarification.md`](2026-04-30-matej-device-verification-and-ai-clarification.md) | Matěj 2.0: ověření na zařízení; vysvětlení TTS vs Gemini Flash vs Nano (Nano zatím ne) |
+
+## 2026-05-01
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-05-01-matej-mvp-ai-quality-bar-nano-flash.md`](2026-05-01-matej-mvp-ai-quality-bar-nano-flash.md) | Laťka AI pro MVP Matěje: Nano jako základ; cloud min. 2.5, volitelně 3.0 Flash / 3.1 Flash-lite (cena); bez Nano není MVP-ready; výchozí cloud v buildu 2.5 Flash |
+
+## 2026-05-02
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-05-02-matej-cloud-companion-voice-billing-direction.md`](2026-05-02-matej-cloud-companion-voice-billing-direction.md) | Matěj: Nano často nedostupné na OEM → cloud jako spolehlivá cesta; tlačítko/PIN vs wake; konverzace + společník; neurální TTS; paušál, strop, backend billing |
+
+## 2026-05-03
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-05-03-matej-conversation-neural-tts-implementation-plan.md`](2026-05-03-matej-conversation-neural-tts-implementation-plan.md) | Matěj: konverzace bez skriptů (jen tenká pravidla pro akce); Google neurální čeština jako první krok TTS; neúčtovat speech zbytečně; fázovaný implementační plán |
+
 Pro **nejnovější etapu** použij soubor s **nejvyšším datem** v názvu; při stejném datu rozhoduje čas poslední úpravy souboru (viz `PROJECT_CONTEXT.md`).

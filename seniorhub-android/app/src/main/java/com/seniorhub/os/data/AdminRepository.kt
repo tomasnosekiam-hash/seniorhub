@@ -299,7 +299,6 @@ class AdminRepository(
                     val pin = snapshot.getString(MvpRepository.KEY_ADMIN_PIN)?.trim().orEmpty()
                     val sim = snapshot.getString(MvpRepository.KEY_SIM_NUMBER)?.trim().orEmpty()
                     val assistant = snapshot.getString(MvpRepository.KEY_ASSISTANT_NAME)?.trim().orEmpty()
-                        .ifEmpty { MvpRepository.DEFAULT_ASSISTANT_NAME }
                     val seniorFirst = snapshot.getString(MvpRepository.KEY_SENIOR_FIRST_NAME)?.trim().orEmpty()
                     val seniorLast = snapshot.getString(MvpRepository.KEY_SENIOR_LAST_NAME)?.trim().orEmpty()
                     val address = snapshot.getString(MvpRepository.KEY_ADDRESS_LINE)?.trim().orEmpty()
@@ -359,8 +358,7 @@ class AdminRepository(
             mapOf(
                 MvpRepository.KEY_ADMIN_PIN to pin,
                 MvpRepository.KEY_SIM_NUMBER to simNumber.trim(),
-                MvpRepository.KEY_ASSISTANT_NAME to assistantName.trim()
-                    .ifEmpty { MvpRepository.DEFAULT_ASSISTANT_NAME },
+                MvpRepository.KEY_ASSISTANT_NAME to assistantName.trim(),
                 "updatedAt" to FieldValue.serverTimestamp(),
             ),
             SetOptions.merge(),

@@ -27,7 +27,6 @@ import com.seniorhub.os.data.AppRole
 import com.seniorhub.os.data.AppRoleStore
 import com.seniorhub.os.data.DeviceIdentityStore
 import com.seniorhub.os.data.MvpRepository
-import com.seniorhub.os.matej.MatejForegroundService
 import com.seniorhub.os.ui.AdminRoute
 import com.seniorhub.os.ui.AdminViewModel
 import com.seniorhub.os.ui.HomeRoute
@@ -51,9 +50,6 @@ class MainActivity : ComponentActivity() {
 
         val appRoleStore = AppRoleStore(applicationContext)
         val role = runBlocking { appRoleStore.getRoleOrNull() }
-        if (role != AppRole.Senior) {
-            MatejForegroundService.stop(applicationContext)
-        }
         requestedOrientation = when (role) {
             AppRole.Admin -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             AppRole.Senior -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE

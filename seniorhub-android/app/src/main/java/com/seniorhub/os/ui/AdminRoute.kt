@@ -211,7 +211,6 @@ private fun AdminSignedInContent(
 
     var pinDraft by remember(selectedId) { mutableStateOf(config?.adminPin ?: "") }
     var simDraft by remember(selectedId) { mutableStateOf(config?.simNumber ?: "") }
-    var assistantDraft by remember(selectedId) { mutableStateOf(config?.assistantName ?: "") }
     var seniorFirstDraft by remember(selectedId) { mutableStateOf(config?.seniorFirstName ?: "") }
     var seniorLastDraft by remember(selectedId) { mutableStateOf(config?.seniorLastName ?: "") }
     var addressDraft by remember(selectedId) { mutableStateOf(config?.addressLine ?: "") }
@@ -228,7 +227,6 @@ private fun AdminSignedInContent(
     LaunchedEffect(config?.adminPin, selectedId) {
         pinDraft = config?.adminPin ?: ""
         simDraft = config?.simNumber ?: ""
-        assistantDraft = config?.assistantName ?: ""
         seniorFirstDraft = config?.seniorFirstName ?: ""
         seniorLastDraft = config?.seniorLastName ?: ""
         addressDraft = config?.addressLine ?: ""
@@ -371,7 +369,7 @@ private fun AdminSignedInContent(
             }
 
             item {
-                SectionTitle("PIN, SIM, asistent")
+                SectionTitle("PIN a SIM")
                 OutlinedTextField(
                     value = pinDraft,
                     onValueChange = { v ->
@@ -388,16 +386,9 @@ private fun AdminSignedInContent(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
-                OutlinedTextField(
-                    value = assistantDraft,
-                    onValueChange = { assistantDraft = it },
-                    label = { Text("Jméno asistenta") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
                 Button(
                     onClick = {
-                        onSaveConfig(pinDraft, simDraft, assistantDraft)
+                        onSaveConfig(pinDraft, simDraft, config?.assistantName.orEmpty())
                     },
                 ) {
                     Text("Uložit PIN a provoz")
@@ -438,7 +429,7 @@ private fun AdminSignedInContent(
             item {
                 SectionTitle("Kontakty na tabletu")
                 Text(
-                    text = "Zaškrtni „Nouze“ u kontaktů pro prioritu při hovoru / u Matěje.",
+                    text = "Zaškrtni „Nouze“ u kontaktů pro prioritu při nouzovém volání.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.DarkGray,
                 )

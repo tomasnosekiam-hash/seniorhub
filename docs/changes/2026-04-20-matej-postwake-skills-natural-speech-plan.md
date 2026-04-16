@@ -55,6 +55,11 @@ Po probuzení (Porcupine nebo STT na jméno asistenta) následuje **druhé krát
 - `data/MvpRepository.kt` — zprávy, SMS zrcadlo.
 - `data/OpenMeteoWeather.kt` — počasí.
 
+### Testy (bez zařízení)
+
+- JVM unit testy: `app/src/test/java/com/seniorhub/os/matej/MatejPostWakeTest.kt` — `classifyPostWakeCommand` a `findContactByTranscript` (prázdný vstup, počasí, vzkaz, SMS, hovor, nouze, delší jméno kontaktu).
+- Spuštění: `./gradlew :app:testDebugUnitTest --tests "com.seniorhub.os.matej.MatejPostWakeTest"`.
+
 ---
 
 ## Reference

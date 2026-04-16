@@ -23,7 +23,7 @@ import kotlinx.coroutines.tasks.await
  *
  * Cloud Functions posílají FCM s `notification` + `data`. Když je aplikace **v popředí**,
  * systém notifikaci v liště **nezobrazí** — zobrazíme ji zde (stejný `channelId` jako u doručení na pozadí:
- * vzkazy [SeniorHubApp.CHANNEL_ID_MESSAGES], incident Matěje [SeniorHubApp.CHANNEL_ID_EMERGENCY_INCIDENT]).
+ * vzkazy [SeniorHubApp.CHANNEL_ID_MESSAGES], incident / nouze [SeniorHubApp.CHANNEL_ID_EMERGENCY_INCIDENT]).
  * Překryv „Vzkaz od rodiny“ dál řeší realtime Firestore v [com.seniorhub.os.ui.HomeViewModel].
  */
 class SeniorHubMessagingService : FirebaseMessagingService() {
@@ -148,12 +148,12 @@ class SeniorHubMessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setContentIntent(pending)
             .build()
-        nm.notify(NOTIFICATION_ID_MATEJ_INCIDENT, notification)
+        nm.notify(NOTIFICATION_ID_INCIDENT, notification)
     }
 
     companion object {
         private const val NOTIFICATION_ID_INCOMING_MESSAGE = 71001
-        private const val NOTIFICATION_ID_MATEJ_INCIDENT = 71002
+        private const val NOTIFICATION_ID_INCIDENT = 71002
         private const val REQUEST_CODE_MESSAGE_TAP = 1
         private const val REQUEST_CODE_INCIDENT_TAP = 2
     }

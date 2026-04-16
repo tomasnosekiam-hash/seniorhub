@@ -3,6 +3,7 @@ package com.seniorhub.os.util
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 
 /**
  * Normalizace telefonního čísla pro `tel:` (číslice a volitelné úvodní +).
@@ -34,8 +35,14 @@ fun dialPadIntent(phone: String): Intent? {
 
 fun Context.startOutgoingCall(phone: String): Boolean {
     val intent = dialIntent(phone) ?: return false
-    startActivity(intent)
-    return true
+    return try {
+        startActivity(intent)
+        true
+    } catch (e: Exception) {
+        // SecurityException if CALL_PHONE denied/revoked; avoid crashing the app (e.g. race with AppOps).
+        Log.w("PhoneDialer", "startOutgoingCall failed", e)
+        false
+    }
 }
 
 fun Context.openDialPad(phone: String): Boolean {

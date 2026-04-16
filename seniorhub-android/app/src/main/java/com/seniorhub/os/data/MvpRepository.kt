@@ -68,8 +68,7 @@ class MvpRepository(
             mapOf(
                 KEY_ADMIN_PIN to pin,
                 KEY_SIM_NUMBER to snap.getString(KEY_SIM_NUMBER).orEmpty(),
-                KEY_ASSISTANT_NAME to (snap.getString(KEY_ASSISTANT_NAME)?.trim()
-                    ?.takeIf { it.isNotEmpty() } ?: DEFAULT_ASSISTANT_NAME),
+                KEY_ASSISTANT_NAME to snap.getString(KEY_ASSISTANT_NAME)?.trim().orEmpty(),
                 "updatedAt" to FieldValue.serverTimestamp(),
             ),
             com.google.firebase.firestore.SetOptions.merge(),
@@ -88,7 +87,6 @@ class MvpRepository(
                     val pin = snapshot.getString(KEY_ADMIN_PIN)?.trim().orEmpty()
                     val sim = snapshot.getString(KEY_SIM_NUMBER)?.trim().orEmpty()
                     val assistant = snapshot.getString(KEY_ASSISTANT_NAME)?.trim().orEmpty()
-                        .ifEmpty { DEFAULT_ASSISTANT_NAME }
                     val seniorFirst = snapshot.getString(KEY_SENIOR_FIRST_NAME)?.trim().orEmpty()
                     val seniorLast = snapshot.getString(KEY_SENIOR_LAST_NAME)?.trim().orEmpty()
                     val address = snapshot.getString(KEY_ADDRESS_LINE)?.trim().orEmpty()
@@ -433,26 +431,6 @@ class MvpRepository(
         ).await()
     }
 
-    /** Zápis incidentu z modulu Matěj (nouzové vytočení) — spouští FCM pro správce přes Cloud Function. */
-    suspend fun recordMatejEmergencyIncident(
-        dialedPhone: String,
-        dialedContactLabel: String?,
-    ) {
-        signInDevice()
-        val phone = dialedPhone.trim().take(40)
-        if (phone.isEmpty()) return
-        val payload = mutableMapOf<String, Any>(
-            KEY_INCIDENT_SOURCE to VAL_INCIDENT_SOURCE_MATEJ,
-            KEY_INCIDENT_CREATED_AT to FieldValue.serverTimestamp(),
-            KEY_INCIDENT_DIALED_PHONE to phone,
-        )
-        val label = dialedContactLabel?.trim()?.take(120).orEmpty()
-        if (label.isNotEmpty()) {
-            payload[KEY_INCIDENT_DIALED_LABEL] = label
-        }
-        deviceRef.collection(SUB_INCIDENTS).add(payload).await()
-    }
-
     suspend fun rotatePairingCodeIfNeeded(force: Boolean): PairingInfo {
         signInDevice()
         val snapshot = deviceRef.get().await()
@@ -557,7 +535,8 @@ class MvpRepository(
         const val KEY_SENIOR_FIRST_NAME = "senior_first_name"
         const val KEY_SENIOR_LAST_NAME = "senior_last_name"
         const val KEY_ADDRESS_LINE = "address_line"
-        const val DEFAULT_ASSISTANT_NAME = "Matěj"
+        /** Volitelné jméno asistenta (historicky); tablet ho už nevyužívá. */
+        const val DEFAULT_ASSISTANT_NAME = ""
         const val KEY_DEVICE_ID = "deviceId"
         const val KEY_DEVICE_AUTH_UID = "deviceAuthUid"
         const val KEY_DEVICE_LABEL = "deviceLabel"
@@ -572,7 +551,6 @@ class MvpRepository(
         const val KEY_SORT_ORDER = "sortOrder"
 
         const val KEY_INCIDENT_SOURCE = "source"
-        const val VAL_INCIDENT_SOURCE_MATEJ = "matej_emergency"
         const val KEY_INCIDENT_CREATED_AT = "createdAt"
         const val KEY_INCIDENT_DIALED_PHONE = "dialedPhone"
         const val KEY_INCIDENT_DIALED_LABEL = "dialedContactLabel"

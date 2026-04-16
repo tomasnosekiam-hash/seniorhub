@@ -78,6 +78,30 @@ h2 {
   color: #fef9c3;
 }
 
+.pair-hint {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.card-kicker {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: #a3a3a3;
+}
+
+.pair-status-info {
+  color: #93c5fd !important;
+}
+
+.pair-status-ok {
+  color: #86efac !important;
+}
+
+.pair-status-err {
+  color: #fecaca !important;
+}
+
 .card {
   background: #171717;
   border: 1px solid #262626;

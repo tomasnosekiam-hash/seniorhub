@@ -7,24 +7,84 @@
     <string name="notification_new_message_title">Nový vzkaz</string>
     <string name="notification_new_message_fallback">Nový vzkaz od rodiny</string>
     <string name="kiosk_home_hint">Kiosk: v nastavení tabletu zvol tuto aplikaci jako výchozí domovskou obrazovku (Domovská aplikace), ať tlačítko Domů vždy vrátí SeniorHub.</string>
-    <string name="notification_channel_matej_name">Asistent Matěj</string>
-    <string name="notification_channel_matej_desc">Naslouchání jménu asistenta na tabletu (režim Senior)</string>
-    <string name="notification_channel_emergency_name">Nouzové volání (Matěj)</string>
-    <string name="notification_channel_emergency_desc">Upozornění, když senior spustí nouzovou sekvenci přes asistenta Matěje</string>
-    <string name="matej_notification_title">Matěj</string>
-    <string name="matej_notification_text">Po oslovení: počasí, přečti vzkaz, SMS jméno, zavolej jméno, nebo nic pro nouzi.</string>
-    <string name="matej_tts_emergency_generic">Volám nouzový kontakt. Senior potřebuje pomoc.</string>
-    <string name="matej_tts_emergency_named">Volám nouzový kontakt. %1$s potřebuje pomoc.</string>
-    <string name="matej_tts_weather_error">Nepodařilo se načíst počasí. Zkuste to znovu za chvíli.</string>
-    <string name="matej_tts_dial_named">Volám kontakt %1$s.</string>
-    <string name="matej_tts_no_unread">Nemáte žádný nepřečtený vzkaz od rodiny.</string>
-    <string name="matej_tts_read_message">Vzkaz od %1$s: %2$s</string>
-    <string name="matej_tts_read_fail">Vzkazy se teď nepodařilo načíst.</string>
-    <string name="matej_tts_sms_no_body">Nerozuměl jsem text zprávy. Řekněte znovu, co mám napsat.</string>
-    <string name="matej_tts_sms_ok">Zpráva pro kontakt %1$s je odeslána.</string>
-    <string name="matej_tts_sms_fail">Odeslání zprávy se nepodařilo.</string>
-    <string name="matej_tts_sms_who">Řekněte jméno kontaktu a zopakujte příkaz.</string>
-    <string name="matej_tts_dial_who">Kontakt se nepodařilo najít. Zkuste celé jméno.</string>
-    <!-- Systémový hint u STT (diktát SMS) — viditelný v dialogu rozpoznávání -->
-    <string name="matej_stt_prompt_sms_body">Řekněte text zprávy</string>
+    <string name="notification_channel_emergency_name">Incident / nouze</string>
+    <string name="notification_channel_emergency_desc">Upozornění správcům při zápisu incidentu k zařízení</string>
+
+    <!-- Senior dashboard -->
+    <string name="dashboard_section_overview">Přehled</string>
+    <string name="dashboard_contacts">Kontakty</string>
+    <string name="dashboard_no_contacts">Zatím žádné — přidej je z webové administrace.</string>
+    <string name="dashboard_family_messages_title">Vzkazy od rodiny</string>
+    <string name="dashboard_family_messages_hint">U kontaktu klepni na Vlákno — zobrazí se odchozí zprávy (cloud i SMS).</string>
+    <string name="contact_action_call">Zavolat</string>
+    <string name="contact_action_sms">SMS</string>
+    <string name="contact_action_thread">Vlákno zpráv</string>
+    <string name="contact_badge_emergency">Nouze</string>
+    <string name="contact_name_fallback">(bez jména)</string>
+    <string name="dashboard_pairing_connected">Správci připojeni</string>
+    <string name="dashboard_pairing_waiting">Čeká na spárování</string>
+    <string name="dashboard_pairing_hint_connected">Klepni sem pro přidání dalšího správce.</string>
+    <string name="dashboard_pairing_hint_waiting">Použij kód ve webové administraci.</string>
+    <string name="dashboard_pairing_expires">Platí do %1$s</string>
+    <string name="dashboard_device_id">ID zařízení: %1$s</string>
+    <string name="dashboard_volume_remote">Hlasitost (z webu): %1$s %%</string>
+    <string name="dashboard_network">Síť: %1$s</string>
+    <string name="dashboard_senior_label">Senior: %1$s</string>
+    <string name="dashboard_battery">Baterie: %1$d %%</string>
+    <string name="dashboard_battery_charging">Baterie: %1$d %% · nabíjení</string>
+    <string name="dashboard_connection_error">Spojení: %1$s</string>
+    <string name="device_label_fallback">Tablet</string>
+
+    <!-- Matěj 2.0 — UI vrstva (Senior) -->
+    <string name="matej_assistant_name">Matěj</string>
+    <string name="matej_phase_greeting">Ahoj — jak ti můžu pomoci?</string>
+    <string name="matej_phase_listening">Naslouchám…</string>
+    <string name="matej_phase_processing">Zpracovávám…</string>
+    <string name="matej_phase_confirming">Potvrďte hlasem…</string>
+    <string name="matej_listening_indicator">Naslouchám</string>
+    <string name="matej_confirm_listening_indicator">Řekněte ano nebo ne</string>
+    <string name="matej_assistant_dismiss_cd">Zavřít asistenta</string>
+    <string name="matej_debug_fab_cd">Spustit Matěje (stejné jako na dashboardu)</string>
+    <string name="matej_start_need_pairing">Nejdřív spáruj tablet ve webové administraci.</string>
+    <string name="matej_mic_denied">Bez mikrofonu Matěj neposlouchá — povol mikrofon v nastavení aplikace.</string>
+    <string name="matej_debug_fab_label" translatable="false">M</string>
+    <string name="matej_tts_greeting">Ahoj, jak ti můžu pomoci?</string>
+    <!-- Hint pro systémové hlasové zadání (SpeechRecognizer) — není to jediná povolená věta, jen nápověda. -->
+    <string name="matej_stt_prompt">Řekněte požadavek česky — například jaké je počasí, nebo kolik je hodin.</string>
+    <string name="notification_channel_matej_wake_name">Matěj — naslouchání</string>
+    <string name="notification_channel_matej_wake_desc">Aktivní naslouchání klíčovému slovu na pozadí.</string>
+    <string name="matej_wake_notification_title">Matěj naslouchá</string>
+    <!-- Bez assets/porcupine/keyword.ppn je wake word vestavěné anglické „Porcupine“, ne „Matěj“. -->
+    <string name="matej_wake_notification_text_builtin_porcupine">Řekněte anglicky „Porcupine“. Pro „Matěj“ vložte vlastní keyword.ppn (viz assets/porcupine).</string>
+    <string name="matej_wake_notification_text_custom_ppn">Řekněte vaše natrénované klíčové slovo (soubor keyword.ppn).</string>
+
+    <!-- Matěj 2.0 — mozek (Gemini Flash + heuristiky) a potvrzení -->
+    <string name="dashboard_matej_title">Hlasový asistent</string>
+    <string name="dashboard_matej_subtitle">Klepni — můžeš se ptát pořád dokola; zavři křížkem nebo řekni třeba „nashle“.</string>
+    <string name="dashboard_matej_button">Spustit Matěje</string>
+    <string name="matej_reply_silent">Nerozuměl jsem — zkus znovu.</string>
+    <string name="matej_reply_weather_unknown">Počasí teď nemám k dispozici.</string>
+    <string name="matej_reply_time">Teď je %1$s.</string>
+    <string name="matej_reply_help">Můžu říct počasí a čas, a můžeme pokračovat v řeči. U SMS a hovoru se nejdřív zeptám a počkám na tvé ano — nebo vyber kontakt dole.</string>
+    <string name="matej_reply_call_sms">Zkus formulovat: zavolej kontaktu jménem z tabulky, nebo napiš SMS. Jinak vyber kontakt dole.</string>
+    <!-- Neúplná SMS — heuristika + záloha při špatném JSON z modelu -->
+    <string name="matej_reply_sms_need_details">Řekni mi to v jedné větě nahlas — komu chceš psát a co má být ve zprávě. Třeba: pošli SMS Janě, že přijdu o půl hodiny později.</string>
+    <!-- Krátká nápověda po otázce, aby bylo jasné, že má mluvit uživatel (jinak působí „odmlčení“). -->
+    <string name="matej_listen_after_question">Pokračujte.</string>
+    <string name="matej_reply_fallback">Tomu nerozumím. Zkus třeba: Jaké je počasí? Kolik je hodin?</string>
+    <string name="matej_brain_contact_not_found">Toho kontaktu v seznamu nemám. Zkus to znovu se jménem z kontaktů.</string>
+    <string name="matej_brain_invalid_phone">U tohoto kontaktu nemám platné číslo.</string>
+    <string name="matej_confirm_sms_prompt">Chci poslat %1$s SMS: %2$s. Mám takto odeslat?</string>
+    <string name="matej_confirm_call_prompt">Chci zavolat %1$s. Mám vytočit?</string>
+    <string name="matej_confirm_cancelled">Dobře, neodesílám.</string>
+    <string name="matej_confirm_unclear">Nerozuměl jsem. Zkus říct ano nebo ne.</string>
+    <string name="matej_sms_sent_ok">SMS je odeslána.</string>
+    <string name="matej_sms_sent_cellular_cloud_failed">SMS je odeslána, ale nepodařilo se uložit kopii do cloudu.</string>
+    <string name="matej_sms_sent_firestore">Zprávu posílám přes aplikaci rodině (na tomto zařízení není klasická SMS).</string>
+    <string name="matej_sms_permission_denied">K odeslání SMS potřebuji v nastavení povolení k SMS.</string>
+    <string name="matej_sms_send_failed">SMS se nepodařilo odeslat.</string>
+    <string name="matej_call_started">Vytáčím.</string>
+    <string name="matej_call_dial_pad">Otevírám číselník — hovor spusť prosím ručně.</string>
+    <string name="matej_call_failed">Hovor se nepodařilo spustit.</string>
+    <string name="matej_session_goodbye">Nashle, kdyby něco, zase mě zavolej.</string>
 </resources>

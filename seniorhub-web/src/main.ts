@@ -158,9 +158,18 @@ if (!configured || !app) {
         <p class="sub" id="authState">Čekám na přihlášení…</p>
       </section>
 
+      <section class="card" id="devicesCard" hidden>
+        <h2>Moje tablety <span class="card-kicker">— výběr zařízení pro nastavení pod tímto seznamem</span></h2>
+        <div id="deviceList" class="device-list"></div>
+      </section>
+
       <section class="card" id="pairCard" hidden>
-        <h2>Přidat tablet</h2>
-        <p class="sub">Na tabletu otevři párovací obrazovku a zadej kód.</p>
+        <h2>Přidat nový tablet</h2>
+        <div class="pair-hint warn">
+          <strong>Nejdřív zkontroluj „Moje tablety“ výše.</strong> Už přidaný uvidíš v seznamu — ten znovu nepáruj.
+          Kód z tabletu zadej jen při <strong>prvním</strong> spojení toho zařízení s tímto účtem.
+        </div>
+        <p class="sub">Na tabletu otevři párovací obrazovku a přepiš kód (bez mezer, velikost písmen nevadí).</p>
         <label class="field">
           <span>Role u tohoto tabletu</span>
           <select id="pairRole" class="inline-select">
@@ -174,11 +183,6 @@ if (!configured || !app) {
           <button id="pairBtn" type="button" class="primary">Spárovat</button>
         </div>
         <p class="sub" id="pairStatus"></p>
-      </section>
-
-      <section class="card" id="devicesCard" hidden>
-        <h2>Moje tablety</h2>
-        <div id="deviceList" class="device-list"></div>
       </section>
 
       <section class="card" id="settingsCard" hidden>
@@ -325,11 +329,12 @@ if (!configured || !app) {
     }
 
     pairStatus.textContent = 'Páruji tablet…'
+    pairStatus.className = 'sub'
     try {
       const claimRef = doc(db, PAIRING_COLLECTION, code)
       const claimSnap = await getDoc(claimRef)
       if (!claimSnap.exists()) {
-        throw new Error('Kód neexistuje nebo už expiroval.')
+        throw new Error('Kód neexistuje nebo už expiroval. Na tabletu vygeneruj nový kód.')
       }
 
       const claim = claimSnap.data()
@@ -337,11 +342,22 @@ if (!configured || !app) {
       if (!deviceId) {
         throw new Error('Párovací kód neobsahuje ID zařízení.')
       }
-      if (claim[KEY_USED_AT]) {
-        throw new Error('Kód už byl použit. Na tabletu obnov kód.')
-      }
 
       const joinRef = doc(db, JOIN_COLLECTION, `${deviceId}_${user.uid}`)
+      const joinSnap = await getDoc(joinRef)
+      if (joinSnap.exists()) {
+        pairStatus.textContent =
+          `Tento tablet (${deviceId}) už máš u tohoto účtu — je v seznamu „Moje tablety“ nad tímto blokem. Další párování nepotřebuješ.`
+        pairStatus.className = 'sub pair-status-info'
+        return
+      }
+
+      if (claim[KEY_USED_AT]) {
+        throw new Error(
+          'Tento kód už byl jednou použit. Pokud jsi to byl ty, tablet už najdeš v „Moje tablety“. Jinak na tabletu vygeneruj nový kód.',
+        )
+      }
+
       const deviceRef = doc(db, COLLECTION, deviceId)
       const batch = writeBatch(db)
       batch.update(claimRef, {
@@ -356,8 +372,8 @@ if (!configured || !app) {
         [KEY_CLAIM_CODE]: code,
         createdAt: serverTimestamp(),
       })
-      await batch.commit()
-      await setDoc(
+      // Jedním commitem s deviceAdmins — pravidla vyhodnotí spárování atomicky (oddělené setDoc po batchi občas selže).
+      batch.set(
         deviceRef,
         {
           [KEY_PAIRED]: true,
@@ -365,10 +381,18 @@ if (!configured || !app) {
         },
         { merge: true },
       )
-      pairStatus.textContent = `Tablet ${deviceId} je spárovaný.`
+      await batch.commit()
+      pairStatus.textContent = `Tablet ${deviceId} je spárovaný — zvol ho v „Moje tablety“ a pokračuj v nastavení níže.`
+      pairStatus.className = 'sub pair-status-ok'
       pairCode.value = ''
     } catch (error) {
-      pairStatus.textContent = getErrorMessage(error)
+      const raw = getErrorMessage(error)
+      const friendly =
+        /permission|insufficient permissions|PERMISSION_DENIED/i.test(raw)
+          ? `${raw} — často jde o to, že tablet už je u účtu spárovaný (zkontroluj „Moje tablety“), nebo kód není aktuální.`
+          : raw
+      pairStatus.textContent = friendly
+      pairStatus.className = 'sub pair-status-err'
     }
   })
 
