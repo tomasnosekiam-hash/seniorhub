@@ -89,7 +89,7 @@ class SeniorHubMessagingService : FirebaseMessagingService() {
                     ?: getString(R.string.notification_new_message_fallback)
                 showForegroundAwareMessageNotification(title, body)
             }
-            "matej_incident" -> {
+            "device_incident" -> {
                 val title = message.notification?.title?.trim()?.takeIf { it.isNotEmpty() }
                     ?: getString(R.string.notification_channel_emergency_name)
                 val body = message.notification?.body?.trim()?.takeIf { it.isNotEmpty() }

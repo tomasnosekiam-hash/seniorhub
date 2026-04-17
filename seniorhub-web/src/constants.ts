@@ -10,7 +10,7 @@ export const STATUS_DOC_ID = 'main'
 export const KEY_NETWORK_TYPE = 'networkType'
 export const KEY_NETWORK_LABEL = 'networkLabel'
 export const KEY_STATUS_UPDATED_AT = 'lastUpdatedAt'
-/** Jeden dokument s provozním nastavením tabletu (PIN, SIM, asistent). */
+/** Jeden dokument s provozním nastavením tabletu (PIN, SIM, volitelné `assistant_name`). */
 export const CONFIG_DOC_ID = 'main'
 
 export const KEY_ADMIN_PIN = 'admin_pin'
@@ -35,7 +35,7 @@ export const KEY_PAIRING_EXPIRES_AT = 'pairingExpiresAt'
 export const KEY_NAME = 'name'
 export const KEY_PHONE = 'phone'
 export const KEY_SORT_ORDER = 'sortOrder'
-/** Kontakt označený pro nouzi / Matěje (priorita). */
+/** Kontakt označený pro nouzi (priorita při hovoru). */
 export const KEY_IS_EMERGENCY = 'is_emergency'
 export const KEY_DEVICE_ID = 'deviceId'
 export const KEY_UID = 'uid'

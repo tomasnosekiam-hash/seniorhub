@@ -6,7 +6,7 @@ Dokumentuje **dohodu o směru** a **implementační plán** pro hlasového asist
 
 - **Konverzace** má být **přirozená** — tón, navazování, společník; **ne** pevný scénář po větách v aplikaci.
 - **Natvrdo** patří jen **tenká bezpečnostní pravidla** k akcím s dopadem do reálného světa: zejména **SMS a hovor** přes **jedno jasné potvrzení** (ano/ne / strukturovaný výstup), ne předčítání předem napsaných větví dialogu.
-- **LLM** (cloud Gemini / případně Nano na zařízení) drží **dialog a záměr**; Kotlin drží **mapování na nástroje** (kontakty, potvrzení), ne „scénář hovoru“.
+- **LLM** (cloud Gemini Flash v aplikaci; dříve zvažované Nano v zařízení) drží **dialog a záměr**; Kotlin drží **mapování na nástroje** (kontakty, potvrzení), ne „scénář hovoru“.
 
 ## STT vs TTS (pro Lenova a obecně)
 
@@ -62,10 +62,16 @@ Dokumentuje **dohodu o směru** a **implementační plán** pro hlasového asist
 ## Související soubory v repu
 
 - `seniorhub-android/app/src/main/java/com/seniorhub/os/matej/MatejBrainPrompt.kt` — systémový prompt a JSON schéma.
-- `seniorhub-android/app/src/main/java/com/seniorhub/os/matej/MatejCompositeBrain.kt` — Nano → Flash → heuristiky.
+- `seniorhub-android/app/src/main/java/com/seniorhub/os/matej/MatejCompositeBrain.kt` — Flash → heuristiky (bez Nano; viz 2026-05-04).
 - `seniorhub-android/app/src/main/java/com/seniorhub/os/matej/MatejVoicePipeline.kt` — STT/TTS.
 - `docs/changes/2026-05-02-matej-cloud-companion-voice-billing-direction.md` — cloud companion, paušál, neurální TTS jako směr.
 
 ## Otevřené rozhodnutí
 
 - Kdy přesunout Gemini volání **jen na backend** (kvóty, účtování LLM) — viz 2026-05-02; **TTS zůstává preferenčně lokální** dokud neurální Google čeština stačí.
+
+---
+
+## Stav implementace (k 2026-05-04)
+
+Konkrétní popis toho, co je dnes v repu (cloud Flash bez Nano, volitelný Cloud Gemini TTS, tok relace, GCP): viz **[`2026-05-04-matej-cloud-gemini-flash-tts-android.md`](2026-05-04-matej-cloud-gemini-flash-tts-android.md)**.

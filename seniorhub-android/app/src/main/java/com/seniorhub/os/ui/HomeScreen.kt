@@ -7,29 +7,17 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.seniorhub.os.BuildConfig
-import com.seniorhub.os.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -49,7 +37,6 @@ fun HomeRoute(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val matejSession by viewModel.matejSession.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val useCellularSms = remember(context) {
@@ -60,63 +47,14 @@ fun HomeRoute(
     var threadContact by remember { mutableStateOf<Contact?>(null) }
     var smsSendError by remember { mutableStateOf<String?>(null) }
     var pendingSms by remember { mutableStateOf<Pair<String, String>?>(null) }
-    val overlayBlocksDashboard = threadContact != null || smsTarget != null
-    val matejDisplayed = matejSession?.let { s ->
-        if (overlayBlocksDashboard) s.copy(compact = true) else s
-    }
     var isDefaultHomeApp by remember {
         mutableStateOf(KioskMode.isOurPackageDefaultHome(context))
     }
     val showKioskLauncherHint = state.device?.paired == true && !isDefaultHomeApp
-    val pairedForMatej = state.device?.paired == true
-    // Dříve jen první složení + ON_RESUME: po načtení Firestore (paired=true) se sync nevolal znovu
-    // a FGS s Porcupine nikdy nenaběhla — mikrofon v systému bez nového přístupu.
-    LaunchedEffect(state.loading, pairedForMatej) {
-        viewModel.syncMatejWakeService()
-    }
-    DisposableEffect(lifecycleOwner) {
-        val obs = LifecycleEventObserver { _, e ->
-            if (e == Lifecycle.Event.ON_RESUME) {
-                viewModel.syncMatejWakeService(force = true)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(obs)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
-    }
     KioskPinningEffect(
         paired = state.device?.paired == true,
         onHomeStateRefresh = { isDefaultHomeApp = KioskMode.isOurPackageDefaultHome(context) },
     )
-    val micPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        if (granted) {
-            viewModel.startMatejAssistant()
-        } else {
-            Toast.makeText(
-                context,
-                context.getString(R.string.matej_mic_denied),
-                Toast.LENGTH_LONG,
-            ).show()
-        }
-    }
-    fun requestMatejStart() {
-        if (state.device?.paired != true) {
-            Toast.makeText(
-                context,
-                context.getString(R.string.matej_start_need_pairing),
-                Toast.LENGTH_SHORT,
-            ).show()
-            return
-        }
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            viewModel.startMatejAssistant()
-        } else {
-            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-        }
-    }
     val callPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
     ) { granted ->
@@ -208,7 +146,6 @@ fun HomeRoute(
             onContactThread = { contact ->
                 threadContact = contact
             },
-            onStartMatej = { requestMatejStart() },
             showKioskLauncherHint = showKioskLauncherHint,
             modifier = Modifier.fillMaxSize(),
         )
@@ -286,28 +223,6 @@ fun HomeRoute(
                     }
                 },
             )
-        }
-        matejDisplayed?.let { ms ->
-            MatejAssistantChrome(
-                session = ms,
-                onDismiss = viewModel::dismissMatej,
-                modifier = Modifier.align(
-                    if (ms.compact) Alignment.TopEnd else Alignment.TopStart,
-                ),
-            )
-        }
-        if (BuildConfig.DEBUG) {
-            FloatingActionButton(
-                onClick = { requestMatejStart() },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(20.dp)
-                    .semantics {
-                        contentDescription = context.getString(R.string.matej_debug_fab_cd)
-                    },
-            ) {
-                Text(stringResource(R.string.matej_debug_fab_label))
-            }
         }
     }
 }

@@ -35,6 +35,7 @@ Každá významná etapa má vlastní soubor `YYYY-MM-DD-kratky-nazev.md`. **Akt
 |--------|------|
 | [`2026-04-16-inbound-sms-fcm-roles-web-viewer.md`](2026-04-16-inbound-sms-fcm-roles-web-viewer.md) | Příchozí SMS do vlákna, deploy rules/functions, viewer v rules, FCM bez spamu správcům, web párování viewer |
 | [`2026-04-16-android-matej-incidents-porcupine-fcm.md`](2026-04-16-android-matej-incidents-porcupine-fcm.md) | Matěj: foreground služba, Porcupine/STT, `devices/.../incidents`, rules, `notifyAdminsOnMatejIncident`, deploy |
+| [`2026-04-16-android-cloud-remove-matej-voice-ai.md`](2026-04-16-android-cloud-remove-matej-voice-ai.md) | Kompletní odstranění hlasové vrstvy z Androidu + `matej*` Functions; `notifyAdminsOnDeviceIncident` + `device_incident` |
 
 ## 2026-04-17
 
@@ -133,5 +134,11 @@ Každá významná etapa má vlastní soubor `YYYY-MM-DD-kratky-nazev.md`. **Akt
 | Soubor | Téma |
 |--------|------|
 | [`2026-05-03-matej-conversation-neural-tts-implementation-plan.md`](2026-05-03-matej-conversation-neural-tts-implementation-plan.md) | Matěj: konverzace bez skriptů (jen tenká pravidla pro akce); Google neurální čeština jako první krok TTS; neúčtovat speech zbytečně; fázovaný implementační plán |
+
+## 2026-05-04
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-05-04-matej-cloud-gemini-flash-tts-android.md`](2026-05-04-matej-cloud-gemini-flash-tts-android.md) | **Aktuální stav Matěje v kódu:** Flash → heuristiky (bez Nano), Cloud Gemini TTS přes Callable, relace (pozdrav / ještě něco / nashle), `local.properties`, GCP, odkazy na starší dokumenty |
 
 Pro **nejnovější etapu** použij soubor s **nejvyšším datem** v názvu; při stejném datu rozhoduje čas poslední úpravy souboru (viz `PROJECT_CONTEXT.md`).

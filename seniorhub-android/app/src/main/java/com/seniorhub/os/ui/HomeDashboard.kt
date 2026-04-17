@@ -31,7 +31,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Forum
-import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -91,7 +90,6 @@ fun HomeScreen(
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
     onContactThread: (Contact) -> Unit,
-    onStartMatej: () -> Unit,
     showKioskLauncherHint: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -136,7 +134,6 @@ fun HomeScreen(
                         onContactCall = onContactCall,
                         onContactSms = onContactSms,
                         onContactThread = onContactThread,
-                        onStartMatej = onStartMatej,
                     )
                 }
             }
@@ -210,7 +207,6 @@ private fun HomeDashboardMain(
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
     onContactThread: (Contact) -> Unit,
-    onStartMatej: () -> Unit,
 ) {
     var clock by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(Unit) {
@@ -241,7 +237,6 @@ private fun HomeDashboardMain(
                     familyMessages = familyMessagesPreview,
                     showKioskLauncherHint = showKioskLauncherHint,
                     onShowPairing = onShowPairing,
-                    onStartMatej = onStartMatej,
                 )
                 item {
                     Spacer(modifier = Modifier.height(6.dp))
@@ -280,7 +275,6 @@ private fun HomeDashboardMain(
                         familyMessages = familyMessagesPreview,
                         showKioskLauncherHint = showKioskLauncherHint,
                         onShowPairing = onShowPairing,
-                        onStartMatej = onStartMatej,
                     )
                 }
                 LazyColumn(
@@ -306,7 +300,6 @@ private fun HomeDashboardMain(
                 }
             }
         }
-        // Dole vlevo — vpravo je v DEBUG překrytý FAB „M“, proto dřív nebylo nic vidět.
         Surface(
             modifier = Modifier.align(Alignment.BottomStart),
             shape = MaterialTheme.shapes.extraSmall,
@@ -335,7 +328,6 @@ private fun LazyListScope.dashboardOverviewItems(
     familyMessages: List<DeviceMessage>,
     showKioskLauncherHint: Boolean,
     onShowPairing: () -> Unit,
-    onStartMatej: () -> Unit,
 ) {
     val seniorDisplay = listOfNotNull(
         deviceConfig?.seniorFirstName?.trim()?.takeIf { it.isNotEmpty() },
@@ -424,47 +416,6 @@ private fun LazyListScope.dashboardOverviewItems(
                     color = scheme.onSurface,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
-            }
-        }
-    }
-    if (device?.paired == true) {
-        item {
-            val scheme = MaterialTheme.colorScheme
-            Card(
-                colors = CardDefaults.cardColors(containerColor = scheme.secondaryContainer),
-                shape = MaterialTheme.shapes.large,
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.SmartToy,
-                            contentDescription = null,
-                            tint = scheme.primary,
-                            modifier = Modifier.size(28.dp),
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = stringResource(R.string.dashboard_matej_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = scheme.onSecondaryContainer,
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.dashboard_matej_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = scheme.onSecondaryContainer.copy(alpha = 0.92f),
-                    )
-                    FilledTonalButton(
-                        onClick = onStartMatej,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(R.string.dashboard_matej_button))
-                    }
-                }
             }
         }
     }
@@ -835,7 +786,6 @@ private fun HomeScreenNarrowPreview() {
             onContactCall = {},
             onContactSms = {},
             onContactThread = {},
-            onStartMatej = {},
             showKioskLauncherHint = false,
         )
     }
@@ -886,7 +836,6 @@ private fun HomeScreenPreview() {
             onContactCall = {},
             onContactSms = {},
             onContactThread = {},
-            onStartMatej = {},
             showKioskLauncherHint = true,
         )
     }
@@ -922,7 +871,6 @@ private fun HomeScreenAlertPreview() {
             onContactCall = {},
             onContactSms = {},
             onContactThread = {},
-            onStartMatej = {},
             showKioskLauncherHint = false,
         )
     }
@@ -945,7 +893,6 @@ private fun HomeScreenLoadingPreview() {
             onContactCall = {},
             onContactSms = {},
             onContactThread = {},
-            onStartMatej = {},
             showKioskLauncherHint = false,
         )
     }

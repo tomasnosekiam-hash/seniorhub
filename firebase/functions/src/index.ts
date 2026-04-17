@@ -97,7 +97,8 @@ export const notifyTabletOnNewMessage = onDocumentCreated(
   },
 );
 
-export const notifyAdminsOnMatejIncident = onDocumentCreated(
+/** FCM správcům při novém dokumentu v `devices/.../incidents` (zdroj v poli `source` je jen metadata). */
+export const notifyAdminsOnDeviceIncident = onDocumentCreated(
   {
     document: "devices/{deviceId}/incidents/{incidentId}",
     region: "europe-west1",
@@ -105,8 +106,6 @@ export const notifyAdminsOnMatejIncident = onDocumentCreated(
   async (event) => {
     const snap = event.data;
     if (!snap) return;
-    const source = String(snap.data()?.source ?? "").trim();
-    if (source !== "matej_emergency") return;
 
     const deviceId = event.params.deviceId as string;
     const deviceSnap = await admin.firestore().doc(`devices/${deviceId}`).get();
@@ -119,7 +118,7 @@ export const notifyAdminsOnMatejIncident = onDocumentCreated(
 
     const adminTokens = await getAdminFcmTokens(deviceId, "");
     if (adminTokens.length === 0) {
-      logger.warn("No admin FCM tokens for Matej incident", { deviceId });
+      logger.warn("No admin FCM tokens for device incident", { deviceId });
       return;
     }
 
@@ -133,17 +132,17 @@ export const notifyAdminsOnMatejIncident = onDocumentCreated(
               priority: "high",
               notification: {
                 title: `Nouze · ${deviceLabel}`,
-                body: `Matěj: nouzové volání → ${preview}`,
+                body: `Incident → ${preview}`,
                 channelId: CHANNEL_ID_EMERGENCY_INCIDENT,
               },
             },
             data: {
-              type: "matej_incident",
+              type: "device_incident",
               deviceId,
               incidentId: event.params.incidentId as string,
             },
           })
-          .catch((e) => logger.error("FCM send failed (Matej incident)", e)),
+          .catch((e) => logger.error("FCM send failed (device incident)", e)),
       ),
     );
   },

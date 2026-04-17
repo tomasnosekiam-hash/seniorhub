@@ -217,8 +217,8 @@ if (!configured || !app) {
           <input id="simNumber" type="text" inputmode="tel" autocomplete="off" placeholder="+420 …" />
         </label>
         <label class="field">
-          <span>Jméno hlasového asistenta</span>
-          <input id="assistantName" type="text" autocomplete="off" placeholder="Matěj" />
+          <span>Volitelná poznámka (assistant_name)</span>
+          <input id="assistantName" type="text" autocomplete="off" placeholder="např. jméno pro budoucí funkce" />
         </label>
         <div class="row">
           <button id="saveConfig" type="button" class="primary">Uložit PIN a SIM</button>
@@ -246,7 +246,7 @@ if (!configured || !app) {
 
       <section class="card" id="contactsCard" hidden>
         <h2>Kontakty na tabletu</h2>
-        <p class="sub">Šipkami změníš pořadí v seznamu (stejné jako na Androidu u správce). Zaškrtni <strong>Nouze</strong> pro prioritu při hovoru / Matějovi.</p>
+        <p class="sub">Šipkami změníš pořadí v seznamu (stejné jako na Androidu u správce). Zaškrtni <strong>Nouze</strong> pro prioritu při hovoru.</p>
         <ul id="contactList" class="list"></ul>
         <div class="grid">
           <label class="field">
@@ -452,7 +452,7 @@ if (!configured || !app) {
         {
           [KEY_ADMIN_PIN]: pin,
           [KEY_SIM_NUMBER]: simNumberEl.value.trim(),
-          [KEY_ASSISTANT_NAME]: assistantNameEl.value.trim() || 'Matěj',
+          [KEY_ASSISTANT_NAME]: assistantNameEl.value.trim(),
           updatedAt: serverTimestamp(),
         },
         { merge: true },
