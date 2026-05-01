@@ -421,6 +421,8 @@ class AdminRepository(
                                 phone = doc.getString(MvpRepository.KEY_PHONE)?.trim().orEmpty(),
                                 isEmergency = doc.getBoolean(MvpRepository.KEY_IS_EMERGENCY) == true,
                                 sortOrder = doc.getLong(MvpRepository.KEY_SORT_ORDER) ?: 0L,
+                                avatarUri = doc.getString(MvpRepository.KEY_AVATAR_URI)?.trim()
+                                    ?.takeIf { it.isNotEmpty() },
                             )
                         }
                         trySend(Result.success(list))
@@ -442,6 +444,7 @@ class AdminRepository(
                 mapOf(
                     MvpRepository.KEY_NAME to n,
                     MvpRepository.KEY_PHONE to p,
+                    MvpRepository.KEY_AVATAR_URI to "",
                     MvpRepository.KEY_IS_EMERGENCY to false,
                     MvpRepository.KEY_SORT_ORDER to System.currentTimeMillis(),
                     "createdAt" to FieldValue.serverTimestamp(),

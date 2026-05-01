@@ -314,6 +314,7 @@ class MvpRepository(
                     phone = phone,
                     isEmergency = doc.getBoolean(KEY_IS_EMERGENCY) == true,
                     sortOrder = doc.getLong(KEY_SORT_ORDER) ?: 0L,
+                    avatarUri = doc.getString(KEY_AVATAR_URI)?.trim()?.takeIf { it.isNotEmpty() },
                 )
             }
         }
@@ -413,6 +414,7 @@ class MvpRepository(
                                 phone = phone,
                                 isEmergency = doc.getBoolean(KEY_IS_EMERGENCY) == true,
                                 sortOrder = doc.getLong(KEY_SORT_ORDER) ?: 0L,
+                                avatarUri = doc.getString(KEY_AVATAR_URI)?.trim()?.takeIf { it.isNotEmpty() },
                             )
                         }
                         trySend(Result.success(list))
@@ -420,6 +422,28 @@ class MvpRepository(
                 }
             }
         awaitClose { registration.remove() }
+    }
+
+    /**
+     * Nový kontakt — stejný tvar jako [com.seniorhub.os.data.AdminRepository.addContact] (tablet smí dle rules zapisovat sám sebe).
+     */
+    suspend fun addContact(name: String, phone: String, avatarUri: String? = null) {
+        signInDevice()
+        val n = name.trim()
+        val p = phone.trim()
+        if (n.isEmpty() && p.isEmpty()) {
+            throw IllegalArgumentException("Vyplň jméno nebo telefon.")
+        }
+        deviceRef.collection(SUB_CONTACTS).add(
+            mapOf(
+                KEY_NAME to n,
+                KEY_PHONE to p,
+                KEY_AVATAR_URI to avatarUri?.trim().orEmpty(),
+                KEY_IS_EMERGENCY to false,
+                KEY_SORT_ORDER to System.currentTimeMillis(),
+                "createdAt" to FieldValue.serverTimestamp(),
+            ),
+        ).await()
     }
 
     suspend fun dismissAlert() {
@@ -547,6 +571,7 @@ class MvpRepository(
         const val KEY_PAIRING_EXPIRES_AT = "pairingExpiresAt"
         const val KEY_NAME = "name"
         const val KEY_PHONE = "phone"
+        const val KEY_AVATAR_URI = "avatar_uri"
         const val KEY_IS_EMERGENCY = "is_emergency"
         const val KEY_SORT_ORDER = "sortOrder"
 

@@ -9,6 +9,7 @@ data class Contact(
     val isEmergency: Boolean = false,
     /** Řazení v seznamu (`devices/.../contacts.sortOrder`). */
     val sortOrder: Long = 0L,
+    val avatarUri: String? = null,
 )
 
 data class DeviceSettings(

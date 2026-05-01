@@ -7,6 +7,8 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.app.role.RoleManager
+import android.telecom.TelecomManager
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -15,6 +17,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -38,6 +43,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 
 class MainActivity : ComponentActivity() {
+    private var seniorFullscreen = false
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -55,6 +61,10 @@ class MainActivity : ComponentActivity() {
             AppRole.Senior -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             null -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
+        seniorFullscreen = role == AppRole.Senior
+        if (seniorFullscreen) {
+            enterSeniorFullscreen()
+        }
 
         if (role == null || role == AppRole.Senior || role == AppRole.Admin) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -71,15 +81,24 @@ class MainActivity : ComponentActivity() {
         }
 
         if (role == AppRole.Senior) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
+            val commNeeded = arrayOf(
+                Manifest.permission.RECEIVE_SMS,
+                Manifest.permission.CALL_PHONE,
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.ANSWER_PHONE_CALLS,
+                Manifest.permission.READ_CALL_LOG,
+            ).filter {
+                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            }
+            if (commNeeded.isNotEmpty()) {
                 ActivityCompat.requestPermissions(
                     this,
-                    arrayOf(Manifest.permission.RECEIVE_SMS),
+                    commNeeded.toTypedArray(),
                     1,
                 )
             }
+            requestDialerRoleIfNeeded()
         }
 
         val db = FirebaseFirestore.getInstance()
@@ -187,7 +206,49 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (seniorFullscreen) {
+            enterSeniorFullscreen()
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && seniorFullscreen) {
+            enterSeniorFullscreen()
+        }
+    }
+
     companion object {
         const val EXTRA_FROM_MESSAGE_NOTIFICATION = "extra_from_message_notification"
+    }
+
+    private fun requestDialerRoleIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java) ?: return
+            if (!roleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) return
+            if (roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) return
+            startActivity(roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER))
+        } else {
+            val telecom = getSystemService(TelecomManager::class.java) ?: return
+            if (telecom.defaultDialerPackage == packageName) return
+            @Suppress("DEPRECATION")
+            startActivity(
+                Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).putExtra(
+                    TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME,
+                    packageName,
+                ),
+            )
+        }
+    }
+
+    private fun enterSeniorFullscreen() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
     }
 }

@@ -3,6 +3,9 @@ package com.seniorhub.os.util
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.telecom.TelecomManager
 import android.util.Log
 
 /**
@@ -34,7 +37,20 @@ fun dialPadIntent(phone: String): Intent? {
 }
 
 fun Context.startOutgoingCall(phone: String): Boolean {
-    val intent = dialIntent(phone) ?: return false
+    val normalized = normalizePhoneForDial(phone) ?: return false
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val telecom = getSystemService(TelecomManager::class.java)
+        if (telecom != null) {
+            return try {
+                telecom.placeCall(Uri.fromParts("tel", normalized, null), Bundle.EMPTY)
+                true
+            } catch (e: Exception) {
+                Log.w("PhoneDialer", "TelecomManager.placeCall failed", e)
+                false
+            }
+        }
+    }
+    val intent = dialIntent(normalized) ?: return false
     return try {
         startActivity(intent)
         true

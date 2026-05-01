@@ -1,7 +1,12 @@
 package com.seniorhub.os.ui
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +24,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -30,11 +38,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.seniorhub.os.R
 import com.seniorhub.os.data.Contact
 import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
@@ -254,6 +266,183 @@ internal fun SmsComposeOverlay(
                     ),
                 ) {
                     Text(sendLabel, fontSize = 18.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun AddContactOverlay(
+    errorMessage: String?,
+    onDismiss: () -> Unit,
+    onSave: (name: String, phone: String, avatarUri: String?) -> Unit,
+) {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var prefixExpanded by remember { mutableStateOf(false) }
+    var prefix by remember { mutableStateOf("+420") }
+    var avatarUri by remember { mutableStateOf<Uri?>(null) }
+    val prefixes = remember { listOf("+420", "+421", "+49", "+43", "+48") }
+    val avatarPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
+            avatarUri = uri
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xEE000000)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .background(Color(0xFF111111))
+                .border(1.dp, Color(0xFFFFFF00))
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.contact_add_title),
+                color = Color(0xFFFFFF00),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = stringResource(R.string.contact_add_cloud_hint),
+                color = Color.White.copy(alpha = 0.78f),
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .background(Color(0xFF1C2D38))
+                        .clickable { avatarPicker.launch(arrayOf("image/*")) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = avatarUri?.let { "✓" } ?: "Foto",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Button(
+                    onClick = { avatarPicker.launch(arrayOf("image/*")) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF223647),
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Text(if (avatarUri == null) "Přidat fotku" else "Změnit fotku", fontSize = 18.sp)
+                }
+            }
+            OutlinedTextField(
+                value = name,
+                onValueChange = { if (it.length <= 80) name = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(stringResource(R.string.contact_add_name_hint)) },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color(0xFFFFFF00),
+                    focusedBorderColor = Color(0xFFFFFF00),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.35f),
+                ),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box {
+                    OutlinedButton(
+                        onClick = { prefixExpanded = true },
+                        modifier = Modifier.height(64.dp),
+                    ) {
+                        Text(prefix, fontSize = 18.sp)
+                    }
+                    DropdownMenu(
+                        expanded = prefixExpanded,
+                        onDismissRequest = { prefixExpanded = false },
+                    ) {
+                        prefixes.forEach { value ->
+                            DropdownMenuItem(
+                                text = { Text(value) },
+                                onClick = {
+                                    prefix = value
+                                    prefixExpanded = false
+                                },
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { if (it.length <= 32) phone = it.filter { ch -> ch.isDigit() || ch == ' ' } },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.contact_add_phone_hint)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = Color(0xFFFFFF00),
+                        focusedBorderColor = Color(0xFFFFFF00),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.35f),
+                    ),
+                )
+            }
+            errorMessage?.let { err ->
+                Text(
+                    text = err,
+                    color = Color(0xFFFF6666),
+                    fontSize = 16.sp,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF333333),
+                        contentColor = Color.White,
+                    ),
+                ) {
+                    Text(stringResource(R.string.contact_add_cancel), fontSize = 18.sp)
+                }
+                Button(
+                    onClick = { onSave(name, "$prefix $phone", avatarUri?.toString()) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFFF00),
+                        contentColor = Color.Black,
+                    ),
+                ) {
+                    Text(stringResource(R.string.contact_add_save), fontSize = 18.sp)
                 }
             }
         }

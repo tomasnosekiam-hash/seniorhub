@@ -1,5 +1,5 @@
 {
-  "version": "2.10",
+  "version": "2.11",
   "children": [
     {
       "type": "frame",
@@ -5820,6 +5820,2810 @@
                   "fontFamily": "Google Sans",
                   "fontSize": 14,
                   "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "LddGv",
+      "x": 2904,
+      "y": 2785,
+      "name": "seniorhub-dashboard",
+      "context": "640x400, baseline rozlišení. Na tabletech se to pak bude zvětšovat v závislosti na ratio rozlišení vs logické rozlišení displeje @1x @2x @3x @4x",
+      "clip": true,
+      "width": 640,
+      "height": 400,
+      "fill": "#312631ff",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1
+      },
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "bNgV1",
+          "x": 172,
+          "y": 90,
+          "name": "Frame 36",
+          "context": "hlavní stream, kde jsou sms, interní zprávy a nepřijaté hovory\n",
+          "width": 187.1326904296875,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Ay8Lu",
+              "name": "Frame 26",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": [
+                0,
+                0,
+                16,
+                0
+              ],
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "nCc4n",
+                  "name": "Frame 24",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 9,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "eClrB",
+                      "name": "Marta Červeňáková",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Marta Červeňáková",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "6v3Ol",
+                      "name": "Čt 17.3. 14:44",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Čt 17.3. 14:44",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lQk2w",
+                  "name": "Frame 15",
+                  "width": "fill_container",
+                  "fill": "#e9d8c8ff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ap53i",
+                      "name": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "context": "text zprávy. Rád bych, aby byla nastavená max. délka zobrazení zprávy na 5 řádků\n",
+                      "fill": "#282128ff",
+                      "textGrowth": "fixed-width-height",
+                      "width": "fill_container",
+                      "height": 80.00000762939453,
+                      "content": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "lineHeight": 1.2999999523162842,
+                      "fontFamily": "Literata",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": -0.24
+                    },
+                    {
+                      "type": "path",
+                      "id": "V43l6",
+                      "layoutPosition": "absolute",
+                      "x": 0,
+                      "y": -22.495075225830078,
+                      "name": "image 11",
+                      "geometry": "M0 8c0-4.41828 3.58172-8 8-8l18 0c4.41828 0 8 3.58172 8 8l0 18c0 4.41828-3.58172 8-8 8l-18 0c-4.41828 0-8-3.58172-8-8l0-18z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 34,
+                      "height": 34,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wyXDq",
+              "name": "Frame 52",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "padding": [
+                0,
+                0,
+                24,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "wNmrw",
+                  "name": "Frame 49",
+                  "width": 187.1326904296875,
+                  "fill": "#3b2e3bff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "padding": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "SeQek",
+                      "name": "Frame 51",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "gap": -7,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "60fxs",
+                          "name": "image 11",
+                          "geometry": "M0 8c0-4.41828 3.58172-8 8-8l8 0c4.41828 0 8 3.58172 8 8l0 8c0 4.41828-3.58172 8-8 8l-8 0c-4.41828 0-8-3.58172-8-8l0-8z",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "",
+                            "mode": "fill"
+                          },
+                          "width": 24,
+                          "height": 24,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "cdM30",
+                          "name": "Frame 50",
+                          "width": 24,
+                          "height": 24,
+                          "fill": "#ff5b8dff",
+                          "cornerRadius": 8,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "gap": 8,
+                          "padding": [
+                            2,
+                            1,
+                            0,
+                            0
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "gjNW9",
+                              "name": "phone-incoming",
+                              "clip": true,
+                              "width": 12,
+                              "height": 12,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 0.5
+                              },
+                              "layout": "none",
+                              "children": [
+                                {
+                                  "type": "path",
+                                  "id": "WwhG7",
+                                  "x": 0.5557307600975037,
+                                  "y": 0.00010653755452949554,
+                                  "name": "Vector (Stroke)",
+                                  "geometry": "M2.99923 0.49989c0.36225-0.00239 0.71354 0.12603 0.98828 0.36231 0.24141 0.20762 0.40902 0.48626 0.48145 0.79394l0.02539 0.13379 0.00098 0.00489c0.05834 0.4421 0.16646 0.87612 0.32226 1.29394l0.03418 0.10156c0.07101 0.23957 0.08067 0.49378 0.02832 0.73926-0.05982 0.28047-0.19874 0.53827-0.40039 0.74219l-0.00195 0.00195-0.3584 0.35742c0.58792 0.92249 1.37056 1.70494 2.29297 2.29297l0.3584-0.35742 0.00195-0.00195c0.20392-0.20165 0.46171-0.34057 0.74219-0.40039 0.28041-0.05976 0.57245-0.03838 0.84082 0.0625l-0.00098 0c0.41809 0.15595 0.85253 0.26392 1.29492 0.32226l0.00488 0.00098c0.36416 0.05148 0.69681 0.23502 0.93457 0.51562 0.23505 0.27752 0.36147 0.63078 0.35547 0.99414l0 1.49805-0.00781 0.15625c-0.01562 0.15515-0.05544 0.30771-0.11816 0.45117-0.08367 0.19122-0.20655 0.3628-0.36035 0.50391-0.15385 0.14113-0.33545 0.24851-0.53321 0.31543-0.19787 0.06692-0.40818 0.09204-0.61621 0.07324l-0.00879-0.00098c-1.61624-0.17566-3.16916-0.72773-4.5332-1.6123l0-0.00098c-1.26701-0.80604-2.34161-1.88031-3.14746-3.14746-0.88752-1.37019-1.43991-2.93032-1.61231-4.55371l-0.00097-0.00781c-0.01869-0.2072 0.00591-0.41611 0.07226-0.61328 0.06647-0.19735 0.17406-0.3794 0.31446-0.53321 0.14024-0.15351 0.3108-0.27629 0.50097-0.36035 0.19049-0.08414 0.39722-0.12773 0.60547-0.12793l1.5 0z m-1.60254 1.01075c-0.03376 0.00714-0.0669 0.01821-0.09863 0.03222-0.0634 0.02804-0.12025 0.06891-0.16699 0.12012-0.04678 0.05126-0.08234 0.11197-0.10449 0.17773-0.02206 0.06564-0.0316 0.13513-0.0254 0.20411 0.14693 1.37291 0.59541 2.69547 1.31055 3.87402l0.14746 0.23437 0.00196 0.00391c0.63726 1.0028 1.46107 1.872 2.4248 2.56152l0.42188 0.28418 0.0039 0.00293c1.23031 0.79775 2.63039 1.29532 4.08789 1.45508 0.06926 0.00622 0.1392-0.00116 0.20508-0.02344 0.06585-0.02231 0.1265-0.05846 0.17773-0.10547 0.05116-0.04702 0.09228-0.1043 0.12012-0.16796 0.02781-0.06371 0.04228-0.13263 0.04199-0.20215l0-1.51465c0.00296-0.12234-0.03915-0.24153-0.11816-0.33496-0.07918-0.09345-0.19027-0.15465-0.31152-0.17188l0-0.00097c-0.516-0.06837-1.02308-0.194-1.51075-0.37598l-0.00097 0c-0.08948-0.03363-0.18679-0.04142-0.28028-0.02148-0.0934 0.01997-0.17915 0.06663-0.24707 0.13378l-0.63281 0.63282c-0.1591 0.1591-0.40496 0.19217-0.60058 0.08105-1.32997-0.75624-2.43124-1.85755-3.1875-3.1875-0.11126-0.19566-0.0781-0.44143 0.08105-0.60058l0.63477-0.63477c0.06625-0.06768 0.11207-0.15343 0.13183-0.24609 0.01978-0.09321 0.01197-0.19007-0.02148-0.2793l0-0.00195c-0.18237-0.48879-0.30969-0.99645-0.37793-1.51368l0-0.00097c-0.01795-0.11804-0.07739-0.22575-0.16797-0.30371-0.09199-0.07911-0.20973-0.12229-0.33106-0.1211l-1.5039 0-0.10352 0.01075z m9.19434-1.36426c0.19528-0.19512 0.51181-0.19522 0.70703 0 0.19508 0.19523 0.19508 0.5118 0 0.70703l-2.64648 2.64648 1.79296 0c0.27602 0.00015 0.5 0.22395 0.5 0.5 0 0.27605-0.22398 0.49985-0.5 0.5l-3 0c-0.27614 0-0.5-0.22386-0.5-0.5l0-3c0-0.27614 0.22386-0.5 0.5-0.5 0.27602 0.00015 0.5 0.22395 0.5 0.5l0 1.79297 2.64649-2.64648z",
+                                  "fill": "#312631ff",
+                                  "width": 11.444369316101074,
+                                  "height": 11.463957786560059,
+                                  "stroke": {
+                                    "align": "center",
+                                    "thickness": 1,
+                                    "join": "round",
+                                    "cap": "round"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jCh6I",
+                      "name": "Frame 53",
+                      "width": "fill_container",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "qoVFJ",
+                          "name": "Tomáš Nesvačil",
+                          "fill": "#e9d8c8ff",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Tomáš Nesvačil",
+                          "lineHeight": 1.2999999523162842,
+                          "fontFamily": "Instrument Sans",
+                          "fontSize": 12,
+                          "fontWeight": "500",
+                          "letterSpacing": -0.24
+                        },
+                        {
+                          "type": "text",
+                          "id": "DA77V",
+                          "name": "Dnes v 10:11",
+                          "fill": "#e9d8c8ff",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Dnes v 10:11",
+                          "lineHeight": 1.2999999523162842,
+                          "fontFamily": "Instrument Sans",
+                          "fontSize": 8,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "SNUQe",
+              "name": "Frame 27",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": [
+                0,
+                0,
+                16,
+                0
+              ],
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "rNKEz",
+                  "name": "Frame 24",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 9,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5ufCP",
+                      "name": "Tomáš Nesvačil",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Tomáš Nesvačil",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zfkCn",
+                      "name": "Čt 17.3. 07:27",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Čt 17.3. 07:27",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "D84f4",
+                  "name": "Frame 15",
+                  "width": "fill_container",
+                  "fill": "#e9d8c8ff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "OWJVb",
+                      "name": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "fill": "#282128ff",
+                      "textGrowth": "fixed-width-height",
+                      "width": "fill_container",
+                      "height": 80.00000762939453,
+                      "content": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "lineHeight": 1.2999999523162842,
+                      "fontFamily": "Literata",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": -0.24
+                    },
+                    {
+                      "type": "path",
+                      "id": "UzA7m",
+                      "layoutPosition": "absolute",
+                      "x": 0,
+                      "y": -22.495311737060547,
+                      "name": "image 11",
+                      "geometry": "M0 8c0-4.41828 3.58172-8 8-8l18 0c4.41828 0 8 3.58172 8 8l0 18c0 4.41828-3.58172 8-8 8l-18 0c-4.41828 0-8-3.58172-8-8l0-18z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 34,
+                      "height": 34,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "iF2m1",
+              "name": "Frame 35",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "9Af0W",
+                  "name": "Frame 24",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 9,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "eNoE9",
+                      "name": "Tomáš Nesvačil",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Tomáš Nesvačil",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 7,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "PYNQd",
+                      "name": "Čt 17.3. 07:27",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Čt 17.3. 07:27",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 7,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "A8qUY",
+                  "name": "Frame 15",
+                  "width": "fill_container",
+                  "fill": "#3b2e3bff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "hXMaq",
+                      "name": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "fill": "#e9d8c8ff",
+                      "textGrowth": "fixed-width-height",
+                      "width": "fill_container",
+                      "height": 80.00000762939453,
+                      "content": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "lineHeight": 1.2999999523162842,
+                      "fontFamily": "Literata",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": -0.24
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 8,
+                      "id": "hnbJ1",
+                      "layoutPosition": "absolute",
+                      "x": 0,
+                      "y": -22.495193481445312,
+                      "name": "image 11",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 34,
+                      "height": 34,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "a2wCM",
+          "x": 21,
+          "y": 105,
+          "name": "Frame 42",
+          "context": "hlavní menu",
+          "width": 77,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "layout": "vertical",
+          "gap": 15,
+          "children": [
+            {
+              "type": "frame",
+              "id": "4kR5b",
+              "name": "Frame 31",
+              "context": "aktivní položka menu",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#9162ffff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#af90f7"
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "7HM0Z",
+                  "name": "home",
+                  "clip": true,
+                  "width": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "gap": 4,
+                  "padding": [
+                    1,
+                    1.5
+                  ],
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "pZPBg",
+                      "name": "Vector",
+                      "geometry": "M0 7l9-7 9 7 0 11c0 0.53043-0.21071 1.03914-0.58579 1.41421-0.37507 0.37507-0.88378 0.58579-1.41421 0.58579l-14 0c-0.53043 0-1.03914-0.21071-1.41421-0.58579-0.37507-0.37507-0.58579-0.88378-0.58579-1.41421l0-11z m6 13l0-10 6 0 0 10",
+                      "width": 9,
+                      "height": 10,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#282128ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "cb87m",
+                  "name": "Domů",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#282128ff",
+                  "content": "Domů",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "fY8CL",
+              "name": "Frame 32",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "vfOCX",
+                  "name": "phone",
+                  "clip": true,
+                  "width": 12,
+                  "height": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "W3B0e",
+                      "x": 1.055938720703125,
+                      "y": 0.99993896484375,
+                      "name": "Vector",
+                      "geometry": "M19.88812 14.9201l0 3c0.00113 0.2785-0.05592 0.55417-0.16749 0.80934-0.11157 0.25518-0.27521 0.48424-0.48044 0.67252-0.20522 0.18828-0.4475 0.33162-0.71132 0.42084-0.26383 0.08922-0.54338 0.12236-0.82075 0.0973-3.07717-0.33436-6.033-1.38585-8.63-3.07-2.41617-1.53534-4.46466-3.58383-6-6-1.69002-2.6088-2.74176-5.57901-3.07-8.67-0.02499-0.27653 0.00787-0.55524 0.0965-0.81838 0.08863-0.26314 0.23107-0.50494 0.41826-0.71 0.1872-0.20507 0.41504-0.36891 0.66903-0.4811 0.25399-0.11219 0.52855-0.17026 0.80621-0.17052l3 0c0.48531-0.00478 0.95579 0.16708 1.32376 0.48353 0.36797 0.31645 0.60832 0.75591 0.67624 1.23647 0.12662 0.96007 0.36145 1.90273 0.7 2.81 0.13454 0.35792 0.16366 0.74691 0.0839 1.12088-0.07976 0.37397-0.26504 0.71723-0.5339 0.98912l-1.27 1.27c1.42356 2.50355 3.49645 4.57645 6 6l1.27-1.27c0.27189-0.26886 0.61515-0.45415 0.98912-0.53391 0.37397-0.07976 0.76296-0.05064 1.12088 0.08391 0.90727 0.33855 1.84994 0.57338 2.81 0.7 0.48577 0.06853 0.9294 0.3132 1.24653 0.68749 0.31713 0.37429 0.48564 0.85208 0.47347 1.34251z",
+                      "width": 9.944366455078125,
+                      "height": 9.964107513427734,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#e9d8c8ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "BMcxc",
+                  "name": "Volání",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Volání",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "KUwmt",
+              "name": "Frame 33",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "itT2T",
+                  "name": "mail",
+                  "clip": true,
+                  "width": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "gap": 4,
+                  "padding": [
+                    2,
+                    1
+                  ],
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "A8lWY",
+                      "name": "Vector",
+                      "geometry": "M2 0l16 0c1.1 0 2 0.9 2 2l0 12c0 1.1-0.9 2-2 2l-16 0c-1.1 0-2-0.9-2-2l0-12c0-1.1 0.9-2 2-2z m18 2l-10 7-10-7",
+                      "width": 10,
+                      "height": 8,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#e9d8c8ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "OJvNR",
+                  "name": "Zprávy",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Zprávy",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RXGGW",
+              "name": "Frame 34",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "y9BOZ",
+                  "name": "image",
+                  "clip": true,
+                  "width": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "gap": 4,
+                  "padding": 1.5,
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "VWv8C",
+                      "name": "Vector",
+                      "geometry": "M16 0l-14 0c-1.10457 0-2 0.89543-2 2l0 14c0 1.10457 0.89543 2 2 2l14 0c1.10457 0 2-0.89543 2-2l0-14c0-1.10457-0.89543-2-2-2z m-10.5 7c0.82843 0 1.5-0.67157 1.5-1.5 0-0.82843-0.67157-1.5-1.5-1.5-0.82843 0-1.5 0.67157-1.5 1.5 0 0.82843 0.67157 1.5 1.5 1.5z m12.5 5l-5-5-11 11",
+                      "width": 9,
+                      "height": 9,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#e9d8c8ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "tElVY",
+                  "name": "Fotky",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Fotky",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "ellipse",
+                  "id": "MGf0I",
+                  "layoutPosition": "absolute",
+                  "x": 73,
+                  "y": 15,
+                  "name": "Ellipse 1",
+                  "context": "puntík jako indikace, že je tam něco nového",
+                  "sweepAngle": -360.00001001791264,
+                  "fill": "#9162ffff",
+                  "width": 6,
+                  "height": 6,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "Qbjvf",
+          "x": 21.046438217163086,
+          "y": 374,
+          "name": "Build Number and Date",
+          "context": "tady dávej číslo verze buildu",
+          "rotation": -0.4434539385072805,
+          "fill": "#9162ffff",
+          "content": "Build Number and Date",
+          "lineHeight": 1.350000023841858,
+          "fontFamily": "Instrument Sans",
+          "fontSize": 7,
+          "fontWeight": "500",
+          "letterSpacing": -0.14
+        },
+        {
+          "type": "frame",
+          "id": "3x0Lr",
+          "x": 401,
+          "y": 92,
+          "name": "Frame 62",
+          "width": 200,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "dNss5",
+              "name": "Frame 61",
+              "context": "widget počasí na dnešní den",
+              "clip": true,
+              "width": "fill_container",
+              "fill": "#3b2e3bff",
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": [
+                16,
+                16,
+                8,
+                16
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "JFeNq",
+                  "name": "Počasí 17.3.",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Počasí 17.3.",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "LB9mn",
+                  "name": "Frame 60",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 34,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "2c2ib",
+                      "name": "Frame 43",
+                      "context": "denní teplota\n",
+                      "width": 52,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "gwcgr",
+                          "name": "Frame 45",
+                          "width": 25,
+                          "height": 25,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "VIbFd",
+                              "name": "Star 1",
+                              "geometry": "M9.59774 0.75303c0.70243-1.00404 2.18926-1.00404 2.89169 0l0.83795 1.19776c0.42554 0.60826 1.18627 0.88514 1.90324 0.69272l1.4118-0.37891c1.18348-0.31763 2.32245 0.63809 2.21516 1.85874l-0.12799 1.45615c-0.065 0.73949 0.33978 1.44058 1.01269 1.75404l1.32506 0.61723c1.11077 0.51741 1.36895 1.98165 0.50214 2.84775l-1.03405 1.03321c-0.52513 0.5247-0.6657 1.32195-0.3517 1.99461l0.61831 1.32456c0.51831 1.11034-0.2251 2.39798-1.44585 2.50428l-1.45626 0.1268c-0.73954 0.0644-1.35969 0.58477-1.55153 1.30189l-0.37776 1.41212c-0.31667 1.18374-1.71383 1.69226-2.71729 0.98902l-1.19707-0.83893c-0.60792-0.42603-1.41747-0.42603-2.02539 0l-1.19706 0.83893c-1.00347 0.70325-2.40063 0.19472-2.7173-0.98902l-0.37776-1.41212c-0.19184-0.71712-0.81199-1.23749-1.55153-1.30189l-1.45626-0.1268c-1.22074-0.1063-1.96416-1.39393-1.44584-2.50428l0.61831-1.32456c0.314-0.67266 0.17342-1.46991-0.35171-1.99461l-1.03405-1.03321c-0.86681-0.86611-0.60863-2.33035 0.50214-2.84775l1.32506-0.61724c0.67292-0.31345 1.07769-1.01454 1.01269-1.75403l-0.12799-1.45615c-0.10729-1.22066 1.03168-2.17637 2.21516-1.85874l1.41181 0.37891c0.71697 0.19242 1.47769-0.08446 1.90323-0.69272l0.83795-1.19776z",
+                              "fill": "#ffb52eff",
+                              "width": 22.08717155456543,
+                              "height": 21.80565643310547,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "i49Wy",
+                          "name": "Frame 56",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "6NhoV",
+                              "name": "24°C",
+                              "fill": "#e9d8c8ff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "24°C",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 24,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "EsALV",
+                              "name": "Odpoledne",
+                              "fill": "#e9d8c8ff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Odpoledne",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 7,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "qhUkX",
+                      "name": "Frame 44",
+                      "context": "noční teplota\n",
+                      "width": 51.55859375,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "onGca",
+                          "name": "Frame 46",
+                          "width": 25,
+                          "height": 25,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "SssgY",
+                              "name": "Subtract",
+                              "geometry": "M1.44591 5.39137c2.97661-5.15545 9.56927-6.92204 14.72479-3.9455 1.64339 0.94885 2.94155 2.26561 3.85198 3.78582 0.24315 0.40601-0.21171 0.85564-0.65995 0.70382-3.82978-1.29716-8.16636 0.23772-10.26552 3.87334-2.09893 3.63546-1.26097 8.15933 1.77656 10.82783 0.35555 0.31235 0.19348 0.93106-0.27972 0.92333-1.77112-0.02891-3.5598-0.49539-5.20264-1.44385-5.15557-2.97657-6.92207-9.56922-3.9455-14.72479z",
+                              "fill": "#e9d8c8ff",
+                              "width": 20.09052848815918,
+                              "height": 21.56008529663086
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "G3EjD",
+                          "name": "Frame 55",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "fvSGM",
+                              "name": "6°C",
+                              "fill": "#9162ffff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "6°C",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 24,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "CGn1A",
+                              "name": "V noci",
+                              "fill": "#9162ffff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "V noci",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 7,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "e1gx9",
+                  "name": "Frame 63",
+                  "width": "fill_container",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5iqDv",
+                      "name": "MeteoPress",
+                      "fill": "#867686ff",
+                      "content": "MeteoPress",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 7,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "2PSy6",
+              "name": "Frame 58",
+              "context": "widget s fotografiemi.",
+              "width": "fill_container",
+              "height": 132,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "justifyContent": "space_between",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "C6hbk",
+                  "name": "Frame 59",
+                  "width": "fill_container",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "padding": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "yVy9K",
+                      "name": "Fotky",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Fotky",
+                      "lineHeight": 1.350000023841858,
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "6lw94",
+                  "name": "Frame 57",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "#3b2e3bff",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "nK2ae",
+                      "name": "image 15",
+                      "geometry": "M0 0l128 0 0 100.57143-128 0 0-100.57143z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 128,
+                      "height": 100.5714340209961,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "id": "uaZJE",
+                      "name": "image 14",
+                      "geometry": "M0 0l128 0 0 100.57143-128 0 0-100.57143z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 128,
+                      "height": 100.5714340209961,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "Te0j1",
+          "x": 0,
+          "y": 0,
+          "name": "Rectangle 8",
+          "fill": "#28212803",
+          "width": 640,
+          "height": 60,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "effect": {
+            "type": "background_blur",
+            "radius": 0
+          }
+        },
+        {
+          "type": "frame",
+          "id": "lAZGS",
+          "x": 0,
+          "y": 0,
+          "name": "Frame 40",
+          "width": 638,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "gap": 193,
+          "padding": [
+            16,
+            16,
+            4,
+            16
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "JDBQA",
+              "name": "13:48",
+              "context": "aktuální čas",
+              "fill": "#e9d8c8ff",
+              "content": "13:48",
+              "textAlign": "center",
+              "fontFamily": "Instrument Sans",
+              "fontSize": 36,
+              "fontWeight": "normal",
+              "letterSpacing": -0.72
+            },
+            {
+              "type": "frame",
+              "id": "qOx0I",
+              "name": "Frame 48",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 32,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "O1sDt",
+                  "name": "Frame 47",
+                  "context": "údaj o baterce",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "group",
+                      "id": "9RQFP",
+                      "name": "Group 1",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 5,
+                          "id": "uaKn7",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Rectangle 10",
+                          "width": 18,
+                          "height": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#e9d8c8ff"
+                          }
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            5,
+                            0,
+                            0,
+                            5
+                          ],
+                          "id": "nPB3y",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Rectangle 11",
+                          "fill": "#e9d8c8ff",
+                          "width": 12,
+                          "height": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "S8btz",
+                      "name": "71%",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "71%",
+                      "lineHeight": 1.350000023841858,
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 10,
+                      "fontWeight": "500",
+                      "letterSpacing": 0.8
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "DEnR3",
+                  "name": "Frame 41",
+                  "context": "dočasné tlačítko pro Matěje asistenta",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 29,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "FoSls",
+                      "name": "Frame 14",
+                      "width": 32,
+                      "height": 32,
+                      "fill": "#9162ffff",
+                      "cornerRadius": 40,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "gap": 8,
+                      "padding": [
+                        8,
+                        11
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "VvnmC",
+                          "name": "M",
+                          "fill": "#282128ff",
+                          "content": "M",
+                          "textAlign": "center",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 12,
+                          "fontWeight": "500",
+                          "letterSpacing": -0.24
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "vjRns",
+      "x": 4200,
+      "y": 3698,
+      "name": "seniorhub-backup",
+      "context": "640x400, baseline rozlišení. Na tabletech se to pak bude zvětšovat v závislosti na ratio rozlišení vs logické rozlišení displeje @1x @2x @3x @4x",
+      "clip": true,
+      "width": 640,
+      "height": 400,
+      "fill": "#312631ff",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1
+      },
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "WTXEP",
+          "x": 172,
+          "y": 90,
+          "name": "Frame 36",
+          "context": "hlavní stream, kde jsou sms, interní zprávy a nepřijaté hovory\n",
+          "width": 187.1326904296875,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "SBxqv",
+              "name": "Frame 26",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": [
+                0,
+                0,
+                16,
+                0
+              ],
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bmyXH",
+                  "name": "Frame 24",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 9,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cxLCs",
+                      "name": "Marta Červeňáková",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Marta Červeňáková",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "mhhmp",
+                      "name": "Čt 17.3. 14:44",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Čt 17.3. 14:44",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "1bshj",
+                  "name": "Frame 15",
+                  "width": "fill_container",
+                  "fill": "#e9d8c8ff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "XqbSD",
+                      "name": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "context": "text zprávy. Rád bych, aby byla nastavená max. délka zobrazení zprávy na 5 řádků\n",
+                      "fill": "#282128ff",
+                      "textGrowth": "fixed-width-height",
+                      "width": "fill_container",
+                      "height": 80.00000762939453,
+                      "content": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "lineHeight": 1.2999999523162842,
+                      "fontFamily": "Literata",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": -0.24
+                    },
+                    {
+                      "type": "path",
+                      "id": "o3jNk",
+                      "layoutPosition": "absolute",
+                      "x": 0,
+                      "y": -22.495075225830078,
+                      "name": "image 11",
+                      "geometry": "M0 8c0-4.41828 3.58172-8 8-8l18 0c4.41828 0 8 3.58172 8 8l0 18c0 4.41828-3.58172 8-8 8l-18 0c-4.41828 0-8-3.58172-8-8l0-18z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 34,
+                      "height": 34,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "q81Up",
+              "name": "Frame 52",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "padding": [
+                0,
+                0,
+                24,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "2R9t6",
+                  "name": "Frame 49",
+                  "width": 187.1326904296875,
+                  "fill": "#3b2e3bff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "padding": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "zSu2I",
+                      "name": "Frame 51",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "gap": -7,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "E8XI6",
+                          "name": "image 11",
+                          "geometry": "M0 8c0-4.41828 3.58172-8 8-8l8 0c4.41828 0 8 3.58172 8 8l0 8c0 4.41828-3.58172 8-8 8l-8 0c-4.41828 0-8-3.58172-8-8l0-8z",
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "",
+                            "mode": "fill"
+                          },
+                          "width": 24,
+                          "height": 24,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "TWaDf",
+                          "name": "Frame 50",
+                          "width": 24,
+                          "height": 24,
+                          "fill": "#ff5b8dff",
+                          "cornerRadius": 8,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "gap": 8,
+                          "padding": [
+                            2,
+                            1,
+                            0,
+                            0
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "HBRn9",
+                              "name": "phone-incoming",
+                              "clip": true,
+                              "width": 12,
+                              "height": 12,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 0.5
+                              },
+                              "layout": "none",
+                              "children": [
+                                {
+                                  "type": "path",
+                                  "id": "llMdr",
+                                  "x": 0.5557307600975037,
+                                  "y": 0.00010653755452949554,
+                                  "name": "Vector (Stroke)",
+                                  "geometry": "M2.99923 0.49989c0.36225-0.00239 0.71354 0.12603 0.98828 0.36231 0.24141 0.20762 0.40902 0.48626 0.48145 0.79394l0.02539 0.13379 0.00098 0.00489c0.05834 0.4421 0.16646 0.87612 0.32226 1.29394l0.03418 0.10156c0.07101 0.23957 0.08067 0.49378 0.02832 0.73926-0.05982 0.28047-0.19874 0.53827-0.40039 0.74219l-0.00195 0.00195-0.3584 0.35742c0.58792 0.92249 1.37056 1.70494 2.29297 2.29297l0.3584-0.35742 0.00195-0.00195c0.20392-0.20165 0.46171-0.34057 0.74219-0.40039 0.28041-0.05976 0.57245-0.03838 0.84082 0.0625l-0.00098 0c0.41809 0.15595 0.85253 0.26392 1.29492 0.32226l0.00488 0.00098c0.36416 0.05148 0.69681 0.23502 0.93457 0.51562 0.23505 0.27752 0.36147 0.63078 0.35547 0.99414l0 1.49805-0.00781 0.15625c-0.01562 0.15515-0.05544 0.30771-0.11816 0.45117-0.08367 0.19122-0.20655 0.3628-0.36035 0.50391-0.15385 0.14113-0.33545 0.24851-0.53321 0.31543-0.19787 0.06692-0.40818 0.09204-0.61621 0.07324l-0.00879-0.00098c-1.61624-0.17566-3.16916-0.72773-4.5332-1.6123l0-0.00098c-1.26701-0.80604-2.34161-1.88031-3.14746-3.14746-0.88752-1.37019-1.43991-2.93032-1.61231-4.55371l-0.00097-0.00781c-0.01869-0.2072 0.00591-0.41611 0.07226-0.61328 0.06647-0.19735 0.17406-0.3794 0.31446-0.53321 0.14024-0.15351 0.3108-0.27629 0.50097-0.36035 0.19049-0.08414 0.39722-0.12773 0.60547-0.12793l1.5 0z m-1.60254 1.01075c-0.03376 0.00714-0.0669 0.01821-0.09863 0.03222-0.0634 0.02804-0.12025 0.06891-0.16699 0.12012-0.04678 0.05126-0.08234 0.11197-0.10449 0.17773-0.02206 0.06564-0.0316 0.13513-0.0254 0.20411 0.14693 1.37291 0.59541 2.69547 1.31055 3.87402l0.14746 0.23437 0.00196 0.00391c0.63726 1.0028 1.46107 1.872 2.4248 2.56152l0.42188 0.28418 0.0039 0.00293c1.23031 0.79775 2.63039 1.29532 4.08789 1.45508 0.06926 0.00622 0.1392-0.00116 0.20508-0.02344 0.06585-0.02231 0.1265-0.05846 0.17773-0.10547 0.05116-0.04702 0.09228-0.1043 0.12012-0.16796 0.02781-0.06371 0.04228-0.13263 0.04199-0.20215l0-1.51465c0.00296-0.12234-0.03915-0.24153-0.11816-0.33496-0.07918-0.09345-0.19027-0.15465-0.31152-0.17188l0-0.00097c-0.516-0.06837-1.02308-0.194-1.51075-0.37598l-0.00097 0c-0.08948-0.03363-0.18679-0.04142-0.28028-0.02148-0.0934 0.01997-0.17915 0.06663-0.24707 0.13378l-0.63281 0.63282c-0.1591 0.1591-0.40496 0.19217-0.60058 0.08105-1.32997-0.75624-2.43124-1.85755-3.1875-3.1875-0.11126-0.19566-0.0781-0.44143 0.08105-0.60058l0.63477-0.63477c0.06625-0.06768 0.11207-0.15343 0.13183-0.24609 0.01978-0.09321 0.01197-0.19007-0.02148-0.2793l0-0.00195c-0.18237-0.48879-0.30969-0.99645-0.37793-1.51368l0-0.00097c-0.01795-0.11804-0.07739-0.22575-0.16797-0.30371-0.09199-0.07911-0.20973-0.12229-0.33106-0.1211l-1.5039 0-0.10352 0.01075z m9.19434-1.36426c0.19528-0.19512 0.51181-0.19522 0.70703 0 0.19508 0.19523 0.19508 0.5118 0 0.70703l-2.64648 2.64648 1.79296 0c0.27602 0.00015 0.5 0.22395 0.5 0.5 0 0.27605-0.22398 0.49985-0.5 0.5l-3 0c-0.27614 0-0.5-0.22386-0.5-0.5l0-3c0-0.27614 0.22386-0.5 0.5-0.5 0.27602 0.00015 0.5 0.22395 0.5 0.5l0 1.79297 2.64649-2.64648z",
+                                  "fill": "#312631ff",
+                                  "width": 11.444369316101074,
+                                  "height": 11.463957786560059,
+                                  "stroke": {
+                                    "align": "center",
+                                    "thickness": 1,
+                                    "join": "round",
+                                    "cap": "round"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rJq2r",
+                      "name": "Frame 53",
+                      "width": "fill_container",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "C1lm0",
+                          "name": "Tomáš Nesvačil",
+                          "fill": "#e9d8c8ff",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Tomáš Nesvačil",
+                          "lineHeight": 1.2999999523162842,
+                          "fontFamily": "Instrument Sans",
+                          "fontSize": 12,
+                          "fontWeight": "500",
+                          "letterSpacing": -0.24
+                        },
+                        {
+                          "type": "text",
+                          "id": "xPZtr",
+                          "name": "Dnes v 10:11",
+                          "fill": "#e9d8c8ff",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Dnes v 10:11",
+                          "lineHeight": 1.2999999523162842,
+                          "fontFamily": "Instrument Sans",
+                          "fontSize": 8,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BmxW1",
+              "name": "Frame 27",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": [
+                0,
+                0,
+                16,
+                0
+              ],
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dQ2Oz",
+                  "name": "Frame 24",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 9,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "nGXub",
+                      "name": "Tomáš Nesvačil",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Tomáš Nesvačil",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "DOZiD",
+                      "name": "Čt 17.3. 07:27",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Čt 17.3. 07:27",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 8,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "yMSQr",
+                  "name": "Frame 15",
+                  "width": "fill_container",
+                  "fill": "#e9d8c8ff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "k5zg8",
+                      "name": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "fill": "#282128ff",
+                      "textGrowth": "fixed-width-height",
+                      "width": "fill_container",
+                      "height": 80.00000762939453,
+                      "content": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "lineHeight": 1.2999999523162842,
+                      "fontFamily": "Literata",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": -0.24
+                    },
+                    {
+                      "type": "path",
+                      "id": "wXq4J",
+                      "layoutPosition": "absolute",
+                      "x": 0,
+                      "y": -22.495311737060547,
+                      "name": "image 11",
+                      "geometry": "M0 8c0-4.41828 3.58172-8 8-8l18 0c4.41828 0 8 3.58172 8 8l0 18c0 4.41828-3.58172 8-8 8l-18 0c-4.41828 0-8-3.58172-8-8l0-18z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 34,
+                      "height": 34,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "E7cGL",
+              "name": "Frame 35",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "3VwZR",
+                  "name": "Frame 24",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 9,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xzjAI",
+                      "name": "Tomáš Nesvačil",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Tomáš Nesvačil",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 7,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lG4hv",
+                      "name": "Čt 17.3. 07:27",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Čt 17.3. 07:27",
+                      "lineHeight": 1.2000000476837158,
+                      "textAlign": "right",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 7,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Jiz8K",
+                  "name": "Frame 15",
+                  "width": "fill_container",
+                  "fill": "#3b2e3bff",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mxq5J",
+                      "name": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "fill": "#e9d8c8ff",
+                      "textGrowth": "fixed-width-height",
+                      "width": "fill_container",
+                      "height": 80.00000762939453,
+                      "content": "Ahoj babi, přijdu v pondělí na čaj, vemu i děti. Můžeme spolu vysadit ty mrkve, jak jsme se bavili minule. Už je čas, počkám tě před domem. Za půl hodinky přijedu a zajedeme tam, ať na nás nečekají.",
+                      "lineHeight": 1.2999999523162842,
+                      "fontFamily": "Literata",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": -0.24
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 8,
+                      "id": "fZX1i",
+                      "layoutPosition": "absolute",
+                      "x": 0,
+                      "y": -22.495193481445312,
+                      "name": "image 11",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 34,
+                      "height": 34,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VXD1K",
+          "x": 21,
+          "y": 105,
+          "name": "Frame 42",
+          "context": "hlavní menu",
+          "width": 77,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "layout": "vertical",
+          "gap": 15,
+          "children": [
+            {
+              "type": "frame",
+              "id": "tEGur",
+              "name": "Frame 31",
+              "context": "aktivní položka menu",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#9162ffff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#af90f7"
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "lohSE",
+                  "name": "home",
+                  "clip": true,
+                  "width": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "gap": 4,
+                  "padding": [
+                    1,
+                    1.5
+                  ],
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "oOaAb",
+                      "name": "Vector",
+                      "geometry": "M0 7l9-7 9 7 0 11c0 0.53043-0.21071 1.03914-0.58579 1.41421-0.37507 0.37507-0.88378 0.58579-1.41421 0.58579l-14 0c-0.53043 0-1.03914-0.21071-1.41421-0.58579-0.37507-0.37507-0.58579-0.88378-0.58579-1.41421l0-11z m6 13l0-10 6 0 0 10",
+                      "width": 9,
+                      "height": 10,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#282128ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "AhsKN",
+                  "name": "Domů",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#282128ff",
+                  "content": "Domů",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lDCKt",
+              "name": "Frame 32",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "DqP51",
+                  "name": "phone",
+                  "clip": true,
+                  "width": 12,
+                  "height": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "jl0kW",
+                      "x": 1.055938720703125,
+                      "y": 0.99993896484375,
+                      "name": "Vector",
+                      "geometry": "M19.88812 14.9201l0 3c0.00113 0.2785-0.05592 0.55417-0.16749 0.80934-0.11157 0.25518-0.27521 0.48424-0.48044 0.67252-0.20522 0.18828-0.4475 0.33162-0.71132 0.42084-0.26383 0.08922-0.54338 0.12236-0.82075 0.0973-3.07717-0.33436-6.033-1.38585-8.63-3.07-2.41617-1.53534-4.46466-3.58383-6-6-1.69002-2.6088-2.74176-5.57901-3.07-8.67-0.02499-0.27653 0.00787-0.55524 0.0965-0.81838 0.08863-0.26314 0.23107-0.50494 0.41826-0.71 0.1872-0.20507 0.41504-0.36891 0.66903-0.4811 0.25399-0.11219 0.52855-0.17026 0.80621-0.17052l3 0c0.48531-0.00478 0.95579 0.16708 1.32376 0.48353 0.36797 0.31645 0.60832 0.75591 0.67624 1.23647 0.12662 0.96007 0.36145 1.90273 0.7 2.81 0.13454 0.35792 0.16366 0.74691 0.0839 1.12088-0.07976 0.37397-0.26504 0.71723-0.5339 0.98912l-1.27 1.27c1.42356 2.50355 3.49645 4.57645 6 6l1.27-1.27c0.27189-0.26886 0.61515-0.45415 0.98912-0.53391 0.37397-0.07976 0.76296-0.05064 1.12088 0.08391 0.90727 0.33855 1.84994 0.57338 2.81 0.7 0.48577 0.06853 0.9294 0.3132 1.24653 0.68749 0.31713 0.37429 0.48564 0.85208 0.47347 1.34251z",
+                      "width": 9.944366455078125,
+                      "height": 9.964107513427734,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#e9d8c8ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "7k2Km",
+                  "name": "Volání",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Volání",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Jhtok",
+              "name": "Frame 33",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "PKUoU",
+                  "name": "mail",
+                  "clip": true,
+                  "width": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "gap": 4,
+                  "padding": [
+                    2,
+                    1
+                  ],
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "h8bDW",
+                      "name": "Vector",
+                      "geometry": "M2 0l16 0c1.1 0 2 0.9 2 2l0 12c0 1.1-0.9 2-2 2l-16 0c-1.1 0-2-0.9-2-2l0-12c0-1.1 0.9-2 2-2z m18 2l-10 7-10-7",
+                      "width": 10,
+                      "height": 8,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#e9d8c8ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "SYPgq",
+                  "name": "Zprávy",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Zprávy",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "4qN8q",
+              "name": "Frame 34",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 63,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 6,
+              "padding": [
+                8,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "sc0xS",
+                  "name": "image",
+                  "clip": true,
+                  "width": 12,
+                  "fill": {
+                    "type": "color",
+                    "color": "#ffffffff",
+                    "enabled": false
+                  },
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 0.5
+                  },
+                  "gap": 4,
+                  "padding": 1.5,
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "qKoY9",
+                      "name": "Vector",
+                      "geometry": "M16 0l-14 0c-1.10457 0-2 0.89543-2 2l0 14c0 1.10457 0.89543 2 2 2l14 0c1.10457 0 2-0.89543 2-2l0-14c0-1.10457-0.89543-2-2-2z m-10.5 7c0.82843 0 1.5-0.67157 1.5-1.5 0-0.82843-0.67157-1.5-1.5-1.5-0.82843 0-1.5 0.67157-1.5 1.5 0 0.82843 0.67157 1.5 1.5 1.5z m12.5 5l-5-5-11 11",
+                      "width": 9,
+                      "height": 9,
+                      "stroke": {
+                        "align": "center",
+                        "thickness": 1,
+                        "join": "round",
+                        "cap": "round",
+                        "fill": "#e9d8c8ff"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "VsEU4",
+                  "name": "Fotky",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Fotky",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "ellipse",
+                  "id": "8yY0N",
+                  "layoutPosition": "absolute",
+                  "x": 73,
+                  "y": 15,
+                  "name": "Ellipse 1",
+                  "context": "puntík jako indikace, že je tam něco nového",
+                  "sweepAngle": -360.00001001791264,
+                  "fill": "#9162ffff",
+                  "width": 6,
+                  "height": 6,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "Mi63I",
+          "x": 21.046438217163086,
+          "y": 374,
+          "name": "Build Number and Date",
+          "context": "tady dávej číslo verze buildu",
+          "rotation": -0.4434539385072805,
+          "fill": "#9162ffff",
+          "content": "Build Number and Date",
+          "lineHeight": 1.350000023841858,
+          "fontFamily": "Instrument Sans",
+          "fontSize": 7,
+          "fontWeight": "500",
+          "letterSpacing": -0.14
+        },
+        {
+          "type": "frame",
+          "id": "B2OR1",
+          "x": 401,
+          "y": 92,
+          "name": "Frame 62",
+          "width": 200,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "ZkGAv",
+              "name": "Frame 61",
+              "context": "widget počasí na dnešní den",
+              "clip": true,
+              "width": "fill_container",
+              "fill": "#3b2e3bff",
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": [
+                16,
+                16,
+                8,
+                16
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "s0iab",
+                  "name": "Počasí 17.3.",
+                  "rotation": -0.4434539385072805,
+                  "fill": "#e9d8c8ff",
+                  "content": "Počasí 17.3.",
+                  "lineHeight": 1.350000023841858,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "m7zd4",
+                  "name": "Frame 60",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 34,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "CYILO",
+                      "name": "Frame 43",
+                      "context": "denní teplota\n",
+                      "width": 52,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "YqniA",
+                          "name": "Frame 45",
+                          "width": 25,
+                          "height": 25,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "2SUKw",
+                              "name": "Star 1",
+                              "geometry": "M9.59774 0.75303c0.70243-1.00404 2.18926-1.00404 2.89169 0l0.83795 1.19776c0.42554 0.60826 1.18627 0.88514 1.90324 0.69272l1.4118-0.37891c1.18348-0.31763 2.32245 0.63809 2.21516 1.85874l-0.12799 1.45615c-0.065 0.73949 0.33978 1.44058 1.01269 1.75404l1.32506 0.61723c1.11077 0.51741 1.36895 1.98165 0.50214 2.84775l-1.03405 1.03321c-0.52513 0.5247-0.6657 1.32195-0.3517 1.99461l0.61831 1.32456c0.51831 1.11034-0.2251 2.39798-1.44585 2.50428l-1.45626 0.1268c-0.73954 0.0644-1.35969 0.58477-1.55153 1.30189l-0.37776 1.41212c-0.31667 1.18374-1.71383 1.69226-2.71729 0.98902l-1.19707-0.83893c-0.60792-0.42603-1.41747-0.42603-2.02539 0l-1.19706 0.83893c-1.00347 0.70325-2.40063 0.19472-2.7173-0.98902l-0.37776-1.41212c-0.19184-0.71712-0.81199-1.23749-1.55153-1.30189l-1.45626-0.1268c-1.22074-0.1063-1.96416-1.39393-1.44584-2.50428l0.61831-1.32456c0.314-0.67266 0.17342-1.46991-0.35171-1.99461l-1.03405-1.03321c-0.86681-0.86611-0.60863-2.33035 0.50214-2.84775l1.32506-0.61724c0.67292-0.31345 1.07769-1.01454 1.01269-1.75403l-0.12799-1.45615c-0.10729-1.22066 1.03168-2.17637 2.21516-1.85874l1.41181 0.37891c0.71697 0.19242 1.47769-0.08446 1.90323-0.69272l0.83795-1.19776z",
+                              "fill": "#ffb52eff",
+                              "width": 22.08717155456543,
+                              "height": 21.80565643310547,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "5pCov",
+                          "name": "Frame 56",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Z2ttp",
+                              "name": "24°C",
+                              "fill": "#e9d8c8ff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "24°C",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 24,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "0VAnS",
+                              "name": "Odpoledne",
+                              "fill": "#e9d8c8ff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Odpoledne",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 7,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "5aMsO",
+                      "name": "Frame 44",
+                      "context": "noční teplota\n",
+                      "width": 51.55859375,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "ZhZSb",
+                          "name": "Frame 46",
+                          "width": 25,
+                          "height": 25,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "ouLJq",
+                              "name": "Subtract",
+                              "geometry": "M1.44591 5.39137c2.97661-5.15545 9.56927-6.92204 14.72479-3.9455 1.64339 0.94885 2.94155 2.26561 3.85198 3.78582 0.24315 0.40601-0.21171 0.85564-0.65995 0.70382-3.82978-1.29716-8.16636 0.23772-10.26552 3.87334-2.09893 3.63546-1.26097 8.15933 1.77656 10.82783 0.35555 0.31235 0.19348 0.93106-0.27972 0.92333-1.77112-0.02891-3.5598-0.49539-5.20264-1.44385-5.15557-2.97657-6.92207-9.56922-3.9455-14.72479z",
+                              "fill": "#e9d8c8ff",
+                              "width": 20.09052848815918,
+                              "height": 21.56008529663086
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "chY6m",
+                          "name": "Frame 55",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          },
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "77alM",
+                              "name": "6°C",
+                              "fill": "#9162ffff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "6°C",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 24,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "eNPV8",
+                              "name": "V noci",
+                              "fill": "#9162ffff",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "V noci",
+                              "fontFamily": "Instrument Sans",
+                              "fontSize": 7,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "08msQ",
+                  "name": "Frame 63",
+                  "width": "fill_container",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "FABvI",
+                      "name": "MeteoPress",
+                      "fill": "#867686ff",
+                      "content": "MeteoPress",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 7,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pIaJc",
+              "name": "Frame 58",
+              "context": "widget s fotografiemi.",
+              "width": "fill_container",
+              "height": 132,
+              "fill": "#3b2e3bff",
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "justifyContent": "space_between",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "tuPI1",
+                  "name": "Frame 59",
+                  "width": "fill_container",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "padding": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "q4pxK",
+                      "name": "Fotky",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "Fotky",
+                      "lineHeight": 1.350000023841858,
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "S7Xax",
+                  "name": "Frame 57",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "#3b2e3bff",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "6ICF6",
+                      "name": "image 15",
+                      "geometry": "M0 0l128 0 0 100.57143-128 0 0-100.57143z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 128,
+                      "height": 100.5714340209961,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "id": "JDC2x",
+                      "name": "image 14",
+                      "geometry": "M0 0l128 0 0 100.57143-128 0 0-100.57143z",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "",
+                        "mode": "fill"
+                      },
+                      "width": 128,
+                      "height": 100.5714340209961,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "Qg9ui",
+          "x": 0,
+          "y": 0,
+          "name": "Rectangle 8",
+          "fill": "#28212803",
+          "width": 640,
+          "height": 60,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "effect": {
+            "type": "background_blur",
+            "radius": 0
+          }
+        },
+        {
+          "type": "frame",
+          "id": "laO03",
+          "x": 0,
+          "y": 0,
+          "name": "Frame 40",
+          "width": 638,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1
+          },
+          "gap": 193,
+          "padding": [
+            16,
+            16,
+            4,
+            16
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "1vkaA",
+              "name": "13:48",
+              "context": "aktuální čas",
+              "fill": "#e9d8c8ff",
+              "content": "13:48",
+              "textAlign": "center",
+              "fontFamily": "Instrument Sans",
+              "fontSize": 36,
+              "fontWeight": "normal",
+              "letterSpacing": -0.72
+            },
+            {
+              "type": "frame",
+              "id": "rZh5y",
+              "name": "Frame 48",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1
+              },
+              "gap": 32,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "8LNtJ",
+                  "name": "Frame 47",
+                  "context": "údaj o baterce",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "group",
+                      "id": "vJnP0",
+                      "name": "Group 1",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 5,
+                          "id": "m3ZnE",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Rectangle 10",
+                          "width": 18,
+                          "height": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#e9d8c8ff"
+                          }
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            5,
+                            0,
+                            0,
+                            5
+                          ],
+                          "id": "kfvGY",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Rectangle 11",
+                          "fill": "#e9d8c8ff",
+                          "width": 12,
+                          "height": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "z2fSb",
+                      "name": "71%",
+                      "rotation": -0.4434539385072805,
+                      "fill": "#e9d8c8ff",
+                      "content": "71%",
+                      "lineHeight": 1.350000023841858,
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 10,
+                      "fontWeight": "500",
+                      "letterSpacing": 0.8
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BQSVw",
+                  "name": "Frame 41",
+                  "context": "dočasné tlačítko pro Matěje asistenta",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1
+                  },
+                  "gap": 29,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "SjJka",
+                      "name": "Frame 14",
+                      "width": 32,
+                      "height": 32,
+                      "fill": "#9162ffff",
+                      "cornerRadius": 40,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1
+                      },
+                      "gap": 8,
+                      "padding": [
+                        8,
+                        11
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "tPuFU",
+                          "name": "M",
+                          "fill": "#282128ff",
+                          "content": "M",
+                          "textAlign": "center",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 12,
+                          "fontWeight": "500",
+                          "letterSpacing": -0.24
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
