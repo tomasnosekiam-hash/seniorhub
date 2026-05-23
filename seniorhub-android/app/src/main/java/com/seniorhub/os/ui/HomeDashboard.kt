@@ -11,6 +11,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,16 +20,21 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -47,11 +53,8 @@ import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,8 +68,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,10 +92,31 @@ import com.seniorhub.os.data.Contact
 import com.seniorhub.os.data.DeviceConfig
 import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
+import com.seniorhub.os.ui.dashboard.ConfirmActionDialog
+import com.seniorhub.os.ui.dashboard.ConfirmActionKind
+import com.seniorhub.os.ui.dashboard.ContactQuickActionDialog
+import com.seniorhub.os.ui.dashboard.ContactsRailSelection
+import com.seniorhub.os.ui.dashboard.DashboardCallsScreen
+import com.seniorhub.os.ui.dashboard.DashboardCenterPanel
+import com.seniorhub.os.ui.dashboard.DashboardContactsScreen
+import com.seniorhub.os.ui.dashboard.DashboardLeftPanel
+import com.seniorhub.os.ui.dashboard.DashboardMenuDestination
+import com.seniorhub.os.ui.dashboard.DashboardMessagesScreen
+import com.seniorhub.os.ui.dashboard.DashboardPhotosScreen
+import com.seniorhub.os.ui.dashboard.DashboardRightPanel
+import com.seniorhub.os.ui.dashboard.EditContactDialog
+import com.seniorhub.os.ui.dashboard.FamilyPhotoItem
+import com.seniorhub.os.ui.dashboard.MessageReplyDialog
+import com.seniorhub.os.ui.dashboard.PhotoViewDialog
+import com.seniorhub.os.ui.theme.SeniorHubDesign
 import com.seniorhub.os.util.CallHistoryEntry
 import com.seniorhub.os.util.CallType
+import com.seniorhub.os.util.SimCardStatus
+import com.seniorhub.os.util.SimCardState
+import com.seniorhub.os.util.SimCardStatusReader
 import com.seniorhub.os.util.belongsToContactThread
 import com.seniorhub.os.util.normalizePhoneForDial
+import com.seniorhub.os.util.phonesMatchForThread
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.time.LocalDate
@@ -98,6 +124,7 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+@Suppress("unused")
 private enum class SeniorTab {
     Home,
     Calls,
@@ -126,11 +153,8 @@ private fun CallType.label(): String = when (this) {
     CallType.Other -> "Hovor"
 }
 
-private fun CallHistoryEntry.belongsTo(contact: Contact): Boolean {
-    val call = normalizePhoneForDial(phone) ?: return false
-    val other = normalizePhoneForDial(contact.phone) ?: return false
-    return call == other
-}
+private fun CallHistoryEntry.belongsTo(contact: Contact): Boolean =
+    phonesMatchForThread(phone, contact.phone)
 
 @Composable
 fun HomeScreen(
@@ -146,12 +170,17 @@ fun HomeScreen(
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
     onContactThread: (Contact) -> Unit,
-    onSendContactMessage: (Contact, String, (Result<Unit>) -> Unit) -> Unit,
+    onSendContactMessage: (Contact, String, DeviceMessage?, (Result<Unit>) -> Unit) -> Unit,
+    onMessageRead: (DeviceMessage) -> Unit = {},
     showKioskLauncherHint: Boolean,
+    simCardStatus: SimCardStatus = SimCardStatus(SimCardState.Ready),
+    onOpenSimSettings: () -> Unit = {},
     communicationPermissions: CommunicationPermissions = CommunicationPermissions.AllGranted,
     onRequestCommunicationPermissions: () -> Unit = {},
     onOpenAppSettings: () -> Unit = {},
     onAddContact: () -> Unit = {},
+    onUpdateContact: (Contact, String, String, String?, String, (Result<Unit>) -> Unit) -> Unit =
+        { _, _, _, _, _, onDone -> onDone(Result.success(Unit)) },
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -170,6 +199,8 @@ fun HomeScreen(
                     SeniorDashboard(
                         state = state,
                         showKioskLauncherHint = showKioskLauncherHint,
+                        simCardStatus = simCardStatus,
+                        onOpenSimSettings = onOpenSimSettings,
                         communicationPermissions = communicationPermissions,
                         onRequestCommunicationPermissions = onRequestCommunicationPermissions,
                         onOpenAppSettings = onOpenAppSettings,
@@ -178,7 +209,9 @@ fun HomeScreen(
                         onContactSms = onContactSms,
                         onContactThread = onContactThread,
                         onSendContactMessage = onSendContactMessage,
+                        onMessageRead = onMessageRead,
                         onAddContact = onAddContact,
+                        onUpdateContact = onUpdateContact,
                     )
                 }
             }
@@ -214,7 +247,11 @@ fun HomeScreen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .size(96.dp)
-                    .clickable(onClick = onKioskSecretTap),
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onKioskSecretTap,
+                    ),
             )
 
             if (state.showKioskUnlock) {
@@ -236,6 +273,8 @@ fun HomeScreen(
 private fun SeniorDashboard(
     state: HomeUiState,
     showKioskLauncherHint: Boolean,
+    simCardStatus: SimCardStatus,
+    onOpenSimSettings: () -> Unit,
     communicationPermissions: CommunicationPermissions,
     onRequestCommunicationPermissions: () -> Unit,
     onOpenAppSettings: () -> Unit,
@@ -243,13 +282,23 @@ private fun SeniorDashboard(
     onContactCall: (String) -> Unit,
     onContactSms: (Contact) -> Unit,
     onContactThread: (Contact) -> Unit,
-    onSendContactMessage: (Contact, String, (Result<Unit>) -> Unit) -> Unit,
+    onSendContactMessage: (Contact, String, DeviceMessage?, (Result<Unit>) -> Unit) -> Unit,
+    onMessageRead: (DeviceMessage) -> Unit,
     onAddContact: () -> Unit,
+    onUpdateContact: (Contact, String, String, String?, String, (Result<Unit>) -> Unit) -> Unit,
 ) {
-    var selectedTab by remember { mutableStateOf(SeniorTab.Home) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var menuDestination by remember { mutableStateOf(DashboardMenuDestination.Home) }
+    var messagesRail by remember { mutableStateOf<ContactsRailSelection>(ContactsRailSelection.All) }
+    var callsRail by remember { mutableStateOf<ContactsRailSelection>(ContactsRailSelection.All) }
     var selectedMessage by remember { mutableStateOf<DeviceMessage?>(null) }
-    var callFilter by remember { mutableStateOf<ContactFilter>(ContactFilter.All) }
-    var messageFilter by remember { mutableStateOf<ContactFilter>(ContactFilter.All) }
+    var messageExpandFromBounds by remember { mutableStateOf<Rect?>(null) }
+    val messageCardBounds = remember { mutableStateMapOf<String, Rect>() }
+    var selectedContact by remember { mutableStateOf<Contact?>(null) }
+    var confirmAction by remember { mutableStateOf<Pair<Contact, ConfirmActionKind>?>(null) }
+    var editContact by remember { mutableStateOf<Contact?>(null) }
+    var editContactError by remember { mutableStateOf<String?>(null) }
+    var selectedPhoto by remember { mutableStateOf<FamilyPhotoItem?>(null) }
     var clock by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(Unit) {
         while (isActive) {
@@ -258,401 +307,219 @@ private fun SeniorDashboard(
         }
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(18.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
-    ) {
-        SeniorMenu(
-            selected = selectedTab,
-            onSelected = { selectedTab = it },
-            device = state.device,
-            config = state.deviceConfig,
-            clock = clock,
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .padding(start = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))
+                .background(SeniorHubDesign.DashboardBackground),
         ) {
+            if (simCardStatus.blocksCellular) {
+                SimUnlockStrip(
+                    message = SimCardStatusReader.bannerMessage(simCardStatus),
+                    onOpenSimSettings = onOpenSimSettings,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                )
+            }
             if (!communicationPermissions.allGranted) {
                 PermissionStrip(
                     permissions = communicationPermissions,
                     onRequestPermissions = onRequestCommunicationPermissions,
                     onOpenSettings = onOpenAppSettings,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                 )
             }
             if (showKioskLauncherHint) {
-                SystemHintStrip(text = stringResource(R.string.kiosk_home_hint), onClick = onShowPairing)
-            }
-            when (selectedTab) {
-                SeniorTab.Home -> HomeTab(
-                    state = state,
-                    onMessageClick = { selectedMessage = it },
-                    onContactCall = onContactCall,
-                    onContactSms = onContactSms,
-                )
-                SeniorTab.Calls -> CallsTab(
-                    contacts = state.contacts,
-                    callHistory = state.callHistory,
-                    selected = callFilter,
-                    onSelected = { callFilter = it },
-                    onAddContact = onAddContact,
-                    onCall = onContactCall,
-                )
-                SeniorTab.Messages -> MessagesTab(
-                    contacts = state.contacts,
-                    messages = state.messages,
-                    selected = messageFilter,
-                    onSelected = { messageFilter = it },
-                    onAddContact = onAddContact,
-                    onOpenThread = onContactThread,
-                    onSendContactMessage = onSendContactMessage,
+                SystemHintStrip(
+                    text = stringResource(R.string.kiosk_home_hint),
+                    onClick = onShowPairing,
+                    modifier = Modifier.padding(horizontal = 24.dp),
                 )
             }
-        }
-    }
-
-    selectedMessage?.let { msg ->
-        MessageDetailOverlay(
-            message = msg,
-            replyContact = state.contacts.firstOrNull { msg.belongsToContactThread(it) },
-            onDismiss = { selectedMessage = null },
-            onReply = { contact ->
-                selectedMessage = null
-                onContactSms(contact)
-            },
-        )
-    }
-}
-
-@Composable
-private fun SeniorMenu(
-    selected: SeniorTab,
-    onSelected: (SeniorTab) -> Unit,
-    device: DeviceSettings?,
-    config: DeviceConfig?,
-    clock: LocalTime,
-) {
-    val scheme = MaterialTheme.colorScheme
-    val seniorName = listOfNotNull(
-        config?.seniorFirstName?.trim()?.takeIf { it.isNotEmpty() },
-        config?.seniorLastName?.trim()?.takeIf { it.isNotEmpty() },
-    ).joinToString(" ").ifBlank { device?.deviceLabel ?: stringResource(R.string.device_label_fallback) }
-    NavigationRail(
-        modifier = Modifier
-            .width(170.dp)
-            .fillMaxHeight(),
-        containerColor = scheme.surfaceContainer,
-        contentColor = scheme.onSurface,
-        header = {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = clock.format(DateTimeFormatter.ofPattern("HH:mm")),
-                style = MaterialTheme.typography.headlineLarge,
-                color = scheme.onSurface,
-                maxLines = 1,
-            )
-            Text(
-                text = seniorName,
-                style = MaterialTheme.typography.labelLarge,
-                color = scheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        },
-    ) {
-            Spacer(Modifier.height(12.dp))
-            MenuButton(
-                label = "Domů",
-                icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
-                selected = selected == SeniorTab.Home,
-                onClick = { onSelected(SeniorTab.Home) },
-            )
-            MenuButton(
-                label = "Volání",
-                icon = { Icon(Icons.Outlined.Call, contentDescription = null) },
-                selected = selected == SeniorTab.Calls,
-                onClick = { onSelected(SeniorTab.Calls) },
-            )
-            MenuButton(
-                label = "Zprávy",
-                icon = { Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = null) },
-                selected = selected == SeniorTab.Messages,
-                onClick = { onSelected(SeniorTab.Messages) },
-            )
-            Spacer(Modifier.weight(1f))
-            Column(
-                modifier = Modifier.padding(bottom = 18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(
+                    if (menuDestination == DashboardMenuDestination.Home) 96.dp else 32.dp,
+                    Alignment.Start,
+                ),
+                verticalAlignment = Alignment.Top,
             ) {
-            device?.batteryPercent?.let { pct ->
-                Text(
-                    text = if (device.charging) "$pct % · nabíjí" else "$pct %",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = scheme.onSurfaceVariant,
+                DashboardLeftPanel(
+                    clock = clock,
+                    activeDestination = menuDestination,
+                    onMenuSelect = { dest ->
+                        menuDestination = dest
+                        if (dest == DashboardMenuDestination.Messages) {
+                            messagesRail = ContactsRailSelection.All
+                        }
+                        if (dest == DashboardMenuDestination.Calls) {
+                            callsRail = ContactsRailSelection.All
+                        }
+                    },
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MenuButton(
-    label: String,
-    icon: @Composable () -> Unit,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    NavigationRailItem(
-        selected = selected,
-        onClick = onClick,
-        icon = icon,
-        label = { Text(label) },
-        alwaysShowLabel = true,
-    )
-}
-
-@Composable
-private fun HomeTab(
-    state: HomeUiState,
-    onMessageClick: (DeviceMessage) -> Unit,
-    onContactCall: (String) -> Unit,
-    onContactSms: (Contact) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.spacedBy(18.dp),
-    ) {
-        RecentActivityColumn(
-            messages = state.messages,
-            contacts = state.contacts,
-            onMessageClick = onMessageClick,
-            modifier = Modifier.weight(1.08f),
-        )
-        HomeSideColumn(
-            weatherLine = state.weatherLine,
-            contacts = state.contacts,
-            onContactCall = onContactCall,
-            onContactSms = onContactSms,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun RecentActivityColumn(
-    messages: List<DeviceMessage>,
-    contacts: List<Contact>,
-    onMessageClick: (DeviceMessage) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val recent = messages.take(8)
-    SectionSurface(modifier = modifier.fillMaxHeight()) {
-        Text("Co je nového", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(12.dp))
-        if (recent.isEmpty()) {
-            EmptyText("Zatím žádná zpráva.")
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(recent, key = { it.id }) { message ->
-                    LargeMessagePreview(
-                        message = message,
-                        contacts = contacts,
-                        onClick = { onMessageClick(message) },
-                    )
-                }
-                item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh) }
-                items(contacts.take(3), key = { "call-${it.id}" }) { contact ->
-                    MiniCallRow(contact)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LargeMessagePreview(
-    message: DeviceMessage,
-    contacts: List<Contact>,
-    onClick: () -> Unit,
-) {
-    val scheme = MaterialTheme.colorScheme
-    val contact = contacts.firstOrNull { message.belongsToContactThread(it) }
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        color = scheme.surfaceContainerHigh,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            if (contact != null) {
-                ContactAvatar(contact = contact, selected = false, modifier = Modifier.size(48.dp))
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("R", style = MaterialTheme.typography.titleLarge, color = Color.White)
-                }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = message.senderDisplayName
-                        ?: message.inboundFromName
-                        ?: message.outboundName
-                        ?: "Rodina",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = scheme.primary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = message.body,
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp, lineHeight = 31.sp),
-                    color = scheme.onSurface,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = formatMessageTime(message.createdAt),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = scheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MiniCallRow(contact: Contact) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = Color.Transparent,
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            ContactAvatar(contact = contact, selected = false)
-            Column {
-                Text(contact.name.ifBlank { contact.phone }, style = MaterialTheme.typography.titleMedium)
-                Text("Kontakt pro volání", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    }
-}
-
-@Composable
-private fun HomeSideColumn(
-    weatherLine: String?,
-    contacts: List<Contact>,
-    onContactCall: (String) -> Unit,
-    onContactSms: (Contact) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SectionSurface(modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(Icons.Outlined.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
-                Text("Počasí", style = MaterialTheme.typography.titleLarge)
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = weatherLine ?: "Počasí se načítá.",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = LocalDate.now().format(DateTimeFormatter.ofPattern("d.M.yyyy")),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        SectionSurface(modifier = Modifier.fillMaxWidth()) {
-            Text("Nejčastější kontakty", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(12.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                items(contacts.take(6), key = { it.id }) { contact ->
-                    QuickContact(contact = contact, onCall = onContactCall, onSms = onContactSms)
-                }
-            }
-        }
-        SectionSurface(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(Icons.Outlined.Image, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Text("Nejnovější fotky", style = MaterialTheme.typography.titleLarge)
-            }
-            Spacer(Modifier.height(14.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                repeat(3) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.07f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Outlined.Image, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f))
+                when (menuDestination) {
+                    DashboardMenuDestination.Home -> {
+                        DashboardCenterPanel(
+                            messages = state.messages,
+                            contacts = state.contacts,
+                            onMessageCardBounds = { id, rect -> messageCardBounds[id] = rect },
+                            onMessageClick = { msg ->
+                                onMessageRead(msg)
+                                messageExpandFromBounds = messageCardBounds[msg.id]
+                                selectedMessage = msg
+                            },
+                        )
+                        DashboardRightPanel(
+                            weather = state.weather,
+                            contacts = state.contacts,
+                            onContactClick = { selectedContact = it },
+                        )
+                    }
+                    DashboardMenuDestination.Messages -> {
+                        DashboardMessagesScreen(
+                            messages = state.messages,
+                            contacts = state.contacts,
+                            selected = messagesRail,
+                            onSelect = { messagesRail = it },
+                            onMessageClick = { msg ->
+                                onMessageRead(msg)
+                                messageExpandFromBounds = messageCardBounds[msg.id]
+                                selectedMessage = msg
+                            },
+                            onMessageCardBounds = { id, rect -> messageCardBounds[id] = rect },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    DashboardMenuDestination.Calls -> {
+                        DashboardCallsScreen(
+                            callHistory = state.callHistory,
+                            contacts = state.contacts,
+                            selected = callsRail,
+                            onSelect = { callsRail = it },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    DashboardMenuDestination.Contacts -> {
+                        DashboardContactsScreen(
+                            contacts = state.contacts,
+                            onEdit = {
+                                editContactError = null
+                                editContact = it
+                            },
+                            onSms = { confirmAction = it to ConfirmActionKind.Sms },
+                            onCall = { confirmAction = it to ConfirmActionKind.Call },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    DashboardMenuDestination.Photos -> {
+                        DashboardPhotosScreen(
+                            onPhotoClick = { selectedPhoto = it },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun QuickContact(
-    contact: Contact,
-    onCall: (String) -> Unit,
-    onSms: (Contact) -> Unit,
-) {
-    Column(
-        modifier = Modifier.width(108.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        ContactAvatar(
-            contact = contact,
-            selected = false,
-            modifier = Modifier
-                .size(70.dp)
-                .clickable { if (contact.phone.isNotBlank()) onCall(contact.phone) },
-        )
-        Text(
-            text = contact.name.ifBlank { contact.phone },
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        OutlinedButton(
-            onClick = { onSms(contact) },
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+        selectedContact?.let { contact ->
+            ContactQuickActionDialog(
+                contact = contact,
+                onDismiss = { selectedContact = null },
+                onCall = {
+                    if (contact.phone.isNotBlank()) {
+                        onContactCall(contact.phone)
+                    }
+                    selectedContact = null
+                },
+                onWriteMessage = {
+                    selectedContact = null
+                    onContactSms(contact)
+                },
+            )
+        }
+
+        selectedMessage?.let { msg ->
+            val replyContact = state.contacts.firstOrNull { msg.belongsToContactThread(it) }
+            val threadForReply = replyContact?.let { c ->
+                state.messages.filter { it.belongsToContactThread(c) }
+            }.orEmpty()
+            val outboundLabel = replyContact?.let { c ->
+                com.seniorhub.os.util.cellularChannelLabel(
+                    com.seniorhub.os.util.resolveOutboundCellularChannel(
+                        context,
+                        c,
+                        threadForReply,
+                        replyTo = msg,
+                    ),
+                )
+            }
+            MessageReplyDialog(
+                message = msg,
+                contact = replyContact,
+                sourceBoundsInRoot = messageExpandFromBounds,
+                outboundChannelLabel = outboundLabel,
+                onDismiss = {
+                    onMessageRead(msg)
+                    selectedMessage = null
+                    messageExpandFromBounds = null
+                },
+                onSendReply = { body, onDone ->
+                    val contact = replyContact
+                    if (contact == null) {
+                        onDone(Result.failure(IllegalStateException("Kontakt pro odpověď není k dispozici.")))
+                    } else {
+                        onSendContactMessage(contact, body, msg, onDone)
+                    }
+                },
+            )
+        }
+
+        confirmAction?.let { (contact, kind) ->
+            ConfirmActionDialog(
+                contactName = contact.name.ifBlank { contact.phone },
+                kind = kind,
+                onDismiss = { confirmAction = null },
+                onConfirm = {
+                    confirmAction = null
+                    when (kind) {
+                        ConfirmActionKind.Call -> {
+                            if (contact.phone.isNotBlank()) onContactCall(contact.phone)
+                        }
+                        ConfirmActionKind.Sms -> onContactSms(contact)
+                    }
+                },
+            )
+        }
+
+        editContact?.let { contact ->
+            EditContactDialog(
+                contact = contact,
+                errorMessage = editContactError,
+                onDismiss = {
+                    editContact = null
+                    editContactError = null
+                },
+                onSave = { name, phone, avatarUri, note ->
+                    onUpdateContact(contact, name, phone, avatarUri, note) { result ->
+                        result.fold(
+                            onSuccess = {
+                                editContact = null
+                                editContactError = null
+                            },
+                            onFailure = { e ->
+                                editContactError = e.message ?: e.toString()
+                            },
+                        )
+                    }
+                },
+            )
+        }
+
+        selectedPhoto?.let { photo ->
+            PhotoViewDialog(photo = photo, onDismiss = { selectedPhoto = null })
         }
     }
 }
@@ -721,7 +588,7 @@ private fun MessagesTab(
     onSelected: (ContactFilter) -> Unit,
     onAddContact: () -> Unit,
     onOpenThread: (Contact) -> Unit,
-    onSendContactMessage: (Contact, String, (Result<Unit>) -> Unit) -> Unit,
+    onSendContactMessage: (Contact, String, DeviceMessage?, (Result<Unit>) -> Unit) -> Unit,
 ) {
     Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
         PeopleRail(
@@ -887,13 +754,12 @@ private fun ContactAvatar(
 
 @Composable
 private fun CompactMessageRow(message: DeviceMessage) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = message.senderDisplayName
                     ?: message.inboundFromName
@@ -912,7 +778,6 @@ private fun CompactMessageRow(message: DeviceMessage) {
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
     }
 }
 
@@ -920,16 +785,11 @@ private fun CompactMessageRow(message: DeviceMessage) {
 private fun MessageComposer(
     contact: Contact,
     onOpenThread: () -> Unit,
-    onSend: (Contact, String, (Result<Unit>) -> Unit) -> Unit,
+    onSend: (Contact, String, DeviceMessage?, (Result<Unit>) -> Unit) -> Unit,
 ) {
     var body by remember(contact.id) { mutableStateOf("") }
     var error by remember(contact.id) { mutableStateOf<String?>(null) }
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = body,
                 onValueChange = { if (it.length <= 2000) body = it },
@@ -957,7 +817,7 @@ private fun MessageComposer(
                         if (text.isEmpty()) {
                             error = "Napiš text zprávy."
                         } else {
-                            onSend(contact, text) { result ->
+                            onSend(contact, text, null) { result ->
                                 result.fold(
                                     onSuccess = {
                                         body = ""
@@ -975,7 +835,6 @@ private fun MessageComposer(
                     Text("Odeslat")
                 }
             }
-        }
     }
 }
 
@@ -984,19 +843,10 @@ private fun SectionSurface(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            content = content,
-        )
-    }
+    Column(
+        modifier = modifier.padding(18.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -1004,19 +854,10 @@ private fun ContentSurface(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            content = content,
-        )
-    }
+    Column(
+        modifier = modifier.padding(18.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -1024,20 +865,10 @@ private fun PeopleSurface(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Row(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(14.dp),
-            content = content,
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant),
-        )
-    }
+    Column(
+        modifier = modifier.padding(14.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -1050,9 +881,7 @@ private fun CallHistoryRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(14.dp),
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -1108,18 +937,50 @@ private fun EmptyText(text: String) {
 }
 
 @Composable
+private fun SimUnlockStrip(
+    message: String,
+    onOpenSimSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = message,
+                modifier = Modifier.weight(1f),
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            FilledTonalButton(onClick = onOpenSimSettings) {
+                Text(stringResource(R.string.sim_unlock_action))
+            }
+        }
+    }
+}
+
+@Composable
 private fun PermissionStrip(
     permissions: CommunicationPermissions,
     onRequestPermissions: () -> Unit,
     onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val missing = buildList {
         if (!permissions.callGranted) add("hovory")
         if (!permissions.sendSmsGranted) add("SMS")
         if (!permissions.receiveSmsGranted) add("příjem SMS")
+        if (!permissions.readSmsGranted) add("čtení schránky (RCS)")
         if (!permissions.callLogGranted) add("historie hovorů")
     }.joinToString(", ")
     Surface(
+        modifier = modifier,
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
@@ -1141,78 +1002,21 @@ private fun PermissionStrip(
 }
 
 @Composable
-private fun SystemHintStrip(text: String, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(12.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+private fun SystemHintStrip(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodyMedium,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
-@Composable
-private fun MessageDetailOverlay(
-    message: DeviceMessage,
-    replyContact: Contact?,
-    onDismiss: () -> Unit,
-    onReply: (Contact) -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xDD000000)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(0.72f),
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = message.senderDisplayName ?: message.inboundFromName ?: "Zpráva",
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Outlined.Close, contentDescription = "Zavřít")
-                    }
-                }
-                Text(
-                    text = message.body,
-                    style = MaterialTheme.typography.headlineMedium.copy(lineHeight = 40.sp),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = formatMessageTime(message.createdAt),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                        Text("Zavřít")
-                    }
-                    Button(
-                        enabled = replyContact != null,
-                        onClick = { replyContact?.let(onReply) },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text("Odpovědět")
-                    }
-                }
-            }
-        }
-    }
-}

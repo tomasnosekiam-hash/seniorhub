@@ -141,4 +141,12 @@ Každá významná etapa má vlastní soubor `YYYY-MM-DD-kratky-nazev.md`. **Akt
 |--------|------|
 | [`2026-05-04-matej-cloud-gemini-flash-tts-android.md`](2026-05-04-matej-cloud-gemini-flash-tts-android.md) | **Aktuální stav Matěje v kódu:** Flash → heuristiky (bez Nano), Cloud Gemini TTS přes Callable, relace (pozdrav / ještě něco / nashle), `local.properties`, GCP, odkazy na starší dokumenty |
 
-Pro **nejnovější etapu** použij soubor s **nejvyšším datem** v názvu; při stejném datu rozhoduje čas poslední úpravy souboru (viz `PROJECT_CONTEXT.md`).
+## 2026-05-23
+
+| Soubor | Téma |
+|--------|------|
+| [`2026-05-23-1200-android-cellular-reply-channel.md`](2026-05-23-1200-android-cellular-reply-channel.md) | **Odpověď SMS/RCS:** `cellular_channel` ve Firestore, výběr kanálu podle vlákna a sítě, RCS přes výchozí Zprávy |
+| [`2026-05-23-1015-android-rcs-mms-inbox.md`](2026-05-23-1015-android-rcs-mms-inbox.md) | **RCS přes MMS:** `Telephony.Mms` + SMS, dedup `sms:`/`mms:`, observer MMS, štítek „příchozí RCS“ |
+| [`2026-05-23-0959-android-rcs-inbox-sync.md`](2026-05-23-0959-android-rcs-inbox-sync.md) | **RCS / příchozí zprávy:** `READ_SMS`, sync schránky, dedup, `sms_inbound`; doplnění k `SMS_RECEIVED` |
+
+Pro **nejnovější etapu** použij soubor s **nejvyšším datem a časem** v názvu (`YYYY-MM-DD-HHMM-…`); při shodě rozhoduje čas poslední úpravy souboru (viz `PROJECT_CONTEXT.md`).

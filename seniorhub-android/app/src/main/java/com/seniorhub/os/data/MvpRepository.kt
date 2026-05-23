@@ -6,7 +6,8 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.seniorhub.os.util.normalizePhoneForDial
+import com.seniorhub.os.util.CellularChannel
+import com.seniorhub.os.util.phonesMatchForThread
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -247,6 +248,8 @@ class MvpRepository(
                 .ifEmpty { null },
             inboundFromName = doc.getString(KEY_INBOUND_FROM_NAME)?.trim().orEmpty()
                 .ifEmpty { null },
+            cellularChannel = doc.getString(KEY_CELLULAR_CHANNEL)?.trim().orEmpty()
+                .ifEmpty { null },
         )
 
     /**
@@ -262,7 +265,12 @@ class MvpRepository(
      * Sjednocuje vlákno u kontaktu (cloud + skutečná SMS).
      */
     suspend fun recordOutboundCellularSms(contact: Contact, body: String) {
-        addOutboundDeviceMessage(contact, body.trim(), VAL_DELIVERY_SMS_CELLULAR)
+        recordOutboundCellular(contact, body, CellularChannel.Sms)
+    }
+
+    /** Po úspěšném odeslání přes mobilní kanál (SMS nebo RCS). */
+    suspend fun recordOutboundCellular(contact: Contact, body: String, channel: CellularChannel) {
+        addOutboundDeviceMessage(contact, body.trim(), VAL_DELIVERY_SMS_CELLULAR, channel)
     }
 
     /**
@@ -272,6 +280,7 @@ class MvpRepository(
         rawFromAddress: String,
         body: String,
         matchedContact: Contact,
+        viaRcs: Boolean = false,
     ) {
         signInDevice()
         val text = body.trim()
@@ -283,31 +292,33 @@ class MvpRepository(
             throw IllegalArgumentException("Chybí číslo odesílatele.")
         }
         val displayName = matchedContact.name.trim().ifEmpty { fromPhone }
-        val senderLabel = "$displayName (příchozí SMS)"
+        val cellular = if (viaRcs) CellularChannel.Rcs else CellularChannel.Sms
+        val channelLabel = if (viaRcs) "příchozí RCS" else "příchozí SMS"
+        val senderLabel = "$displayName ($channelLabel)"
         deviceRef.collection(SUB_MESSAGES).add(
             mapOf(
                 KEY_BODY to text,
                 KEY_SENDER_UID to deviceAuthUid,
                 KEY_SENDER_DISPLAY_NAME to senderLabel,
                 KEY_CREATED_AT to FieldValue.serverTimestamp(),
-                KEY_READ_AT to FieldValue.serverTimestamp(),
                 KEY_DELIVERY to VAL_DELIVERY_SMS_INBOUND,
                 KEY_INBOUND_FROM_PHONE to fromPhone,
                 KEY_INBOUND_FROM_NAME to matchedContact.name.trim(),
+                KEY_CELLULAR_CHANNEL to cellular.wireValue,
             ),
         ).await()
     }
 
     suspend fun findContactForIncomingPhone(rawFromAddress: String): Contact? {
         signInDevice()
-        val normIncoming = normalizePhoneForDial(rawFromAddress.trim()) ?: return null
+        val from = rawFromAddress.trim()
+        if (from.isEmpty()) return null
         val snap = deviceRef.collection(SUB_CONTACTS).get().await()
         for (doc in snap.documents) {
             val name = doc.getString(KEY_NAME)?.trim().orEmpty()
             val phone = doc.getString(KEY_PHONE)?.trim().orEmpty()
             if (name.isEmpty() && phone.isEmpty()) continue
-            val normContact = normalizePhoneForDial(phone) ?: continue
-            if (normContact == normIncoming) {
+            if (phonesMatchForThread(from, phone)) {
                 return Contact(
                     id = doc.id,
                     name = name,
@@ -315,13 +326,19 @@ class MvpRepository(
                     isEmergency = doc.getBoolean(KEY_IS_EMERGENCY) == true,
                     sortOrder = doc.getLong(KEY_SORT_ORDER) ?: 0L,
                     avatarUri = doc.getString(KEY_AVATAR_URI)?.trim()?.takeIf { it.isNotEmpty() },
+                    note = doc.getString(KEY_NOTE)?.trim().orEmpty(),
                 )
             }
         }
         return null
     }
 
-    private suspend fun addOutboundDeviceMessage(contact: Contact, body: String, delivery: String) {
+    private suspend fun addOutboundDeviceMessage(
+        contact: Contact,
+        body: String,
+        delivery: String,
+        cellularChannel: CellularChannel? = null,
+    ) {
         signInDevice()
         if (body.isEmpty()) {
             throw IllegalArgumentException("Zpráva je prázdná.")
@@ -333,19 +350,21 @@ class MvpRepository(
         val snap = deviceRef.get().await()
         val label = snap.getString(KEY_DEVICE_LABEL)?.trim().orEmpty().ifBlank { "Tablet" }
         val senderLabel = "$label (tablet)"
-        deviceRef.collection(SUB_MESSAGES).add(
-            mapOf(
-                KEY_BODY to body,
-                KEY_SENDER_UID to deviceAuthUid,
-                KEY_SENDER_DISPLAY_NAME to senderLabel,
-                KEY_CREATED_AT to FieldValue.serverTimestamp(),
-                // Odchozí z tabletu — nepovažovat za „nepřečtený vzkaz“ přes celou obrazovku.
-                KEY_READ_AT to FieldValue.serverTimestamp(),
-                KEY_DELIVERY to delivery,
-                KEY_OUTBOUND_PHONE to phone,
-                KEY_OUTBOUND_NAME to contact.name.trim(),
-            ),
-        ).await()
+        val payload = mutableMapOf<String, Any>(
+            KEY_BODY to body,
+            KEY_SENDER_UID to deviceAuthUid,
+            KEY_SENDER_DISPLAY_NAME to senderLabel,
+            KEY_CREATED_AT to FieldValue.serverTimestamp(),
+            // Odchozí z tabletu — nepovažovat za „nepřečtený vzkaz“ přes celou obrazovku.
+            KEY_READ_AT to FieldValue.serverTimestamp(),
+            KEY_DELIVERY to delivery,
+            KEY_OUTBOUND_PHONE to phone,
+            KEY_OUTBOUND_NAME to contact.name.trim(),
+        )
+        if (cellularChannel != null) {
+            payload[KEY_CELLULAR_CHANNEL] = cellularChannel.wireValue
+        }
+        deviceRef.collection(SUB_MESSAGES).add(payload).await()
     }
 
     suspend fun registerFcmToken(token: String) {
@@ -415,6 +434,7 @@ class MvpRepository(
                                 isEmergency = doc.getBoolean(KEY_IS_EMERGENCY) == true,
                                 sortOrder = doc.getLong(KEY_SORT_ORDER) ?: 0L,
                                 avatarUri = doc.getString(KEY_AVATAR_URI)?.trim()?.takeIf { it.isNotEmpty() },
+                                note = doc.getString(KEY_NOTE)?.trim().orEmpty(),
                             )
                         }
                         trySend(Result.success(list))
@@ -427,7 +447,12 @@ class MvpRepository(
     /**
      * Nový kontakt — stejný tvar jako [com.seniorhub.os.data.AdminRepository.addContact] (tablet smí dle rules zapisovat sám sebe).
      */
-    suspend fun addContact(name: String, phone: String, avatarUri: String? = null) {
+    suspend fun addContact(
+        name: String,
+        phone: String,
+        avatarUri: String? = null,
+        note: String = "",
+    ) {
         signInDevice()
         val n = name.trim()
         val p = phone.trim()
@@ -439,9 +464,33 @@ class MvpRepository(
                 KEY_NAME to n,
                 KEY_PHONE to p,
                 KEY_AVATAR_URI to avatarUri?.trim().orEmpty(),
+                KEY_NOTE to note.trim(),
                 KEY_IS_EMERGENCY to false,
                 KEY_SORT_ORDER to System.currentTimeMillis(),
                 "createdAt" to FieldValue.serverTimestamp(),
+            ),
+        ).await()
+    }
+
+    suspend fun updateContact(
+        contactId: String,
+        name: String,
+        phone: String,
+        avatarUri: String?,
+        note: String,
+    ) {
+        signInDevice()
+        val n = name.trim()
+        val p = phone.trim()
+        if (n.isEmpty() && p.isEmpty()) {
+            throw IllegalArgumentException("Vyplň jméno nebo telefon.")
+        }
+        deviceRef.collection(SUB_CONTACTS).document(contactId).update(
+            mapOf(
+                KEY_NAME to n,
+                KEY_PHONE to p,
+                KEY_AVATAR_URI to avatarUri?.trim().orEmpty(),
+                KEY_NOTE to note.trim(),
             ),
         ).await()
     }
@@ -551,6 +600,7 @@ class MvpRepository(
         const val KEY_OUTBOUND_NAME = "outbound_name"
         const val KEY_INBOUND_FROM_PHONE = "inbound_from_phone"
         const val KEY_INBOUND_FROM_NAME = "inbound_from_name"
+        const val KEY_CELLULAR_CHANNEL = "cellular_channel"
         const val KEY_FCM_REGISTRATION_TOKEN = "fcmRegistrationToken"
         const val CONFIG_DOC_ID = "main"
         const val KEY_ADMIN_PIN = "admin_pin"
@@ -572,6 +622,7 @@ class MvpRepository(
         const val KEY_NAME = "name"
         const val KEY_PHONE = "phone"
         const val KEY_AVATAR_URI = "avatar_uri"
+        const val KEY_NOTE = "note"
         const val KEY_IS_EMERGENCY = "is_emergency"
         const val KEY_SORT_ORDER = "sortOrder"
 

@@ -65,6 +65,7 @@ Tento dokument je **závazný** pro veškeré změny v repozitáři. Cíl: bezpe
 - **Flows**: každá listener registrace musí být správně ukončená (`awaitClose`).
 - **Battery/CPU**: vyvaruj se častému polling. Preferuj realtime listenery a throttling.
 - **Crash safety**: žádné system dialogy pro seniora; chyby zobrazit srozumitelně a logovat pro admina (později).
+- **Nasazení na referenční tablet**: po každé změně v `seniorhub-android` (zejména UI) vždy sestav a nainstaluj debug APK na připojený tablet (`./gradlew :app:installDebug`, případně `adb install -r app/build/outputs/apk/debug/app-debug.apk`). Bez úspěšné instalace změnu nepovažuj za hotovou — uživatel ověřuje na zařízení TB336ZU (USB debugging).
 
 ## 6) Kiosk/Launcher (budoucí práce)
 - Žádné „hard block“ bez device-owner strategie.
@@ -101,6 +102,7 @@ Každá změna musí splnit:
   - přihlášení (web)
   - načtení zařízení
   - změna nastavení → projeví se na tabletu
+  - Android UI změny: po `installDebug` ověřit na připojeném tabletu (restart aplikace)
 
 ## 11) PR / commit disciplína (i bez GitHubu)
 - Každý větší zásah doplň do `docs/changes/` (datum + co + proč).

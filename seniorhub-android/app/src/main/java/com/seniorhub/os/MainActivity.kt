@@ -17,9 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -32,18 +29,20 @@ import com.seniorhub.os.data.AppRole
 import com.seniorhub.os.data.AppRoleStore
 import com.seniorhub.os.data.DeviceIdentityStore
 import com.seniorhub.os.data.MvpRepository
+import com.seniorhub.os.kiosk.KioskPolicy
 import com.seniorhub.os.ui.AdminRoute
 import com.seniorhub.os.ui.AdminViewModel
 import com.seniorhub.os.ui.HomeRoute
 import com.seniorhub.os.ui.HomeViewModel
 import com.seniorhub.os.ui.RolePickerScreen
 import com.seniorhub.os.ui.theme.SeniorHubTheme
+import com.seniorhub.os.util.KioskMode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 
 class MainActivity : ComponentActivity() {
-    private var seniorFullscreen = false
+    private var seniorMode = false
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -51,19 +50,23 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val appRoleStore = AppRoleStore(applicationContext)
+        val role = runBlocking { appRoleStore.getRoleOrNull() }
+        seniorMode = role == AppRole.Senior
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val appRoleStore = AppRoleStore(applicationContext)
-        val role = runBlocking { appRoleStore.getRoleOrNull() }
         requestedOrientation = when (role) {
             AppRole.Admin -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             AppRole.Senior -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             null -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
-        seniorFullscreen = role == AppRole.Senior
-        if (seniorFullscreen) {
-            enterSeniorFullscreen()
+        if (seniorMode) {
+            if (KioskPolicy.isDeviceOwner(this)) {
+                KioskPolicy.enterDeviceOwnerKiosk(this)
+            } else {
+                KioskMode.clearWakeToApp(this)
+            }
         }
 
         if (role == null || role == AppRole.Senior || role == AppRole.Admin) {
@@ -80,27 +83,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if (role == AppRole.Senior) {
-            val commNeeded = arrayOf(
-                Manifest.permission.RECEIVE_SMS,
-                Manifest.permission.CALL_PHONE,
-                Manifest.permission.SEND_SMS,
-                Manifest.permission.READ_PHONE_STATE,
-                Manifest.permission.ANSWER_PHONE_CALLS,
-                Manifest.permission.READ_CALL_LOG,
-            ).filter {
-                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-            }
-            if (commNeeded.isNotEmpty()) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    commNeeded.toTypedArray(),
-                    1,
-                )
-            }
-            requestDialerRoleIfNeeded()
-        }
-
         val db = FirebaseFirestore.getInstance()
         val auth = FirebaseAuth.getInstance()
 
@@ -109,7 +91,7 @@ class MainActivity : ComponentActivity() {
                 this,
                 object : OnBackPressedCallback(true) {
                     override fun handleOnBackPressed() {
-                        // Kiosk: neukončovat aplikaci tlačítkem Zpět.
+                        // Domovská aplikace — tlačítko Zpět neukončuje tablet.
                     }
                 },
             )
@@ -206,22 +188,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (seniorFullscreen) {
-            enterSeniorFullscreen()
-        }
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus && seniorFullscreen) {
-            enterSeniorFullscreen()
-        }
-    }
-
-    companion object {
-        const val EXTRA_FROM_MESSAGE_NOTIFICATION = "extra_from_message_notification"
+    /** Volat až po potvrzeném lock task — jinak dialog telefonu přeruší připnutí. */
+    internal fun requestDialerRoleWhenReady() {
+        if (!KioskMode.isInLockTask(this)) return
+        requestDialerRoleIfNeeded()
     }
 
     private fun requestDialerRoleIfNeeded() {
@@ -243,12 +213,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun enterSeniorFullscreen() {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            hide(WindowInsetsCompat.Type.systemBars())
-        }
+    companion object {
+        const val EXTRA_FROM_MESSAGE_NOTIFICATION = "extra_from_message_notification"
     }
 }

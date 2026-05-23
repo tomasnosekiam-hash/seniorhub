@@ -423,6 +423,7 @@ class AdminRepository(
                                 sortOrder = doc.getLong(MvpRepository.KEY_SORT_ORDER) ?: 0L,
                                 avatarUri = doc.getString(MvpRepository.KEY_AVATAR_URI)?.trim()
                                     ?.takeIf { it.isNotEmpty() },
+                                note = doc.getString(MvpRepository.KEY_NOTE)?.trim().orEmpty(),
                             )
                         }
                         trySend(Result.success(list))

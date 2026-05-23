@@ -10,12 +10,12 @@ import com.seniorhub.os.data.AppRole
 import com.seniorhub.os.data.AppRoleStore
 import com.seniorhub.os.data.DeviceIdentityStore
 import com.seniorhub.os.data.MvpRepository
+import com.seniorhub.os.util.syncInboundCellularMessages
 import kotlin.concurrent.thread
 import kotlinx.coroutines.runBlocking
 
 /**
- * Příjem klasických SMS — pokud číslo odpovídá kontaktu ve Firestore, zrcadlí zprávu do [MvpRepository.SUB_MESSAGES]
- * (stejné vlákno jako odchozí SMS / cloud zprávy).
+ * Příjem klasických SMS (broadcast) + synchronizace schránky pro RCS / zprávy bez SMS_RECEIVED.
  */
 class IncomingSmsReceiver : BroadcastReceiver() {
 
@@ -45,8 +45,12 @@ class IncomingSmsReceiver : BroadcastReceiver() {
                         FirebaseAuth.getInstance(),
                         deviceId,
                     )
-                    val contact = repo.findContactForIncomingPhone(from) ?: return@runBlocking
-                    repo.recordInboundCellularSms(from, fullBody, contact)
+                    val contact = repo.findContactForIncomingPhone(from)
+                    if (contact != null) {
+                        repo.recordInboundCellularSms(from, fullBody, contact)
+                    }
+                    // RCS / zprávy bez SMS_RECEIVED — dohledat ve schránce (READ_SMS).
+                    syncInboundCellularMessages(appContext, repo)
                 }
             } catch (_: Throwable) {
             } finally {

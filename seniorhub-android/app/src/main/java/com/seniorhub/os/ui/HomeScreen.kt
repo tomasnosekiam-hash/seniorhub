@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,10 +28,16 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seniorhub.os.data.Contact
+import com.seniorhub.os.data.DeviceMessage
+import com.seniorhub.os.util.CellularOutbound
 import com.seniorhub.os.util.CellularSmsCapability
+import com.seniorhub.os.util.cellularChannelLabel
+import com.seniorhub.os.util.resolveOutboundCellularChannel
+import com.seniorhub.os.MainActivity
 import com.seniorhub.os.util.KioskMode
 import com.seniorhub.os.util.RemoteAudioVolume
-import com.seniorhub.os.util.SmsSender
+import com.seniorhub.os.util.SimCardStatusReader
+import kotlinx.coroutines.delay
 import com.seniorhub.os.util.belongsToContactThread
 import com.seniorhub.os.util.normalizePhoneForDial
 import com.seniorhub.os.util.openDialPad
@@ -44,37 +51,40 @@ fun HomeRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val useCellularSms = remember(context) {
-        CellularSmsCapability.canSendCellularSms(context)
+    var useCellularSms by remember {
+        mutableStateOf(CellularSmsCapability.canSendCellularSms(context))
     }
+    var deviceEpoch by remember { mutableIntStateOf(0) }
+    val simCardStatus = remember(deviceEpoch) { SimCardStatusReader.read(context) }
     var pendingCallPhone by remember { mutableStateOf<String?>(null) }
     var smsTarget by remember { mutableStateOf<Contact?>(null) }
     var threadContact by remember { mutableStateOf<Contact?>(null) }
     var smsSendError by remember { mutableStateOf<String?>(null) }
-    var pendingSms by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var pendingCellularSend by remember { mutableStateOf<PendingCellularSend?>(null) }
     var addContactOpen by remember { mutableStateOf(false) }
     var addContactError by remember { mutableStateOf<String?>(null) }
     var isDefaultHomeApp by remember {
         mutableStateOf(KioskMode.isOurPackageDefaultHome(context))
     }
     val showKioskLauncherHint = state.device?.paired == true && !isDefaultHomeApp
-    var permissionEpoch by remember { mutableIntStateOf(0) }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                permissionEpoch++
+                deviceEpoch++
+                isDefaultHomeApp = KioskMode.isOurPackageDefaultHome(context)
+                useCellularSms = CellularSmsCapability.canSendCellularSms(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    val communicationPermissions = remember(permissionEpoch) {
+    val communicationPermissions = remember(deviceEpoch) {
         communicationPermissionsOf(context)
     }
     val communicationPermissionsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
     ) {
-        permissionEpoch++
+        deviceEpoch++
     }
     fun placeOutgoingCall(rawPhone: String) {
         val act = context as? ComponentActivity
@@ -92,11 +102,14 @@ fun HomeRoute(
             RemoteAudioVolume.apply(context.applicationContext, pct)
         }
     }
-    KioskPinningEffect(
-        paired = state.device?.paired == true,
-        isDefaultHomeApp = isDefaultHomeApp,
-        onHomeStateRefresh = { isDefaultHomeApp = KioskMode.isOurPackageDefaultHome(context) },
-    )
+    val kioskPaired = state.device?.paired == true
+    LaunchedEffect(kioskPaired) {
+        val activity = context as? MainActivity ?: return@LaunchedEffect
+        if (kioskPaired && KioskMode.isInLockTask(activity)) {
+            delay(3_000)
+            activity.requestDialerRoleWhenReady()
+        }
+    }
     val callPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
     ) { granted ->
@@ -112,36 +125,30 @@ fun HomeRoute(
     val smsPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        val pending = pendingSms
-        pendingSms = null
+        val pending = pendingCellularSend
+        pendingCellularSend = null
         if (pending == null) return@rememberLauncherForActivityResult
         if (granted) {
-            val phone = pending.first
-            val body = pending.second
-            val targetContact = smsTarget
-            SmsSender.send(context, phone, body).fold(
-                onSuccess = {
-                    if (targetContact != null) {
-                        viewModel.recordOutboundCellularSms(targetContact, body) { result ->
-                            result.fold(
-                                onSuccess = {
-                                    smsTarget = null
-                                    smsSendError = null
-                                },
-                                onFailure = { e ->
-                                    smsSendError =
-                                        "SMS odeslána. Zápis do cloudu se nepodařil: ${e.message ?: e}"
-                                    smsTarget = null
-                                },
-                            )
-                        }
-                    } else {
-                        smsTarget = null
-                        smsSendError = null
-                    }
-                },
-                onFailure = { e ->
-                    smsSendError = e.message ?: "Odeslání se nezdařilo."
+            val thread = state.messages.filter { it.belongsToContactThread(pending.contact) }
+            sendMessageToContact(
+                context = context,
+                viewModel = viewModel,
+                contact = pending.contact,
+                body = pending.body,
+                useCellularSms = useCellularSms,
+                threadMessages = thread,
+                replyTo = pending.replyTo,
+                onNeedPermission = { /* právě uděleno */ },
+                onDone = { result ->
+                    result.fold(
+                        onSuccess = {
+                            smsTarget = null
+                            smsSendError = null
+                        },
+                        onFailure = { e ->
+                            smsSendError = e.message ?: "Odeslání se nezdařilo."
+                        },
+                    )
                 },
             )
         } else {
@@ -150,6 +157,7 @@ fun HomeRoute(
     }
     Box(modifier = modifier) {
         HomeScreen(
+            modifier = Modifier.fillMaxSize(),
             state = state,
             onDismissAlert = viewModel::dismissAlert,
             onDismissUnreadMessage = viewModel::dismissUnreadMessage,
@@ -188,15 +196,18 @@ fun HomeRoute(
             onContactThread = { contact ->
                 threadContact = contact
             },
-            onSendContactMessage = { contact, body, onDone ->
+            onSendContactMessage = { contact, body, replyTo, onDone ->
+                val thread = state.messages.filter { it.belongsToContactThread(contact) }
                 sendMessageToContact(
                     context = context,
                     viewModel = viewModel,
                     contact = contact,
                     body = body,
                     useCellularSms = useCellularSms,
+                    threadMessages = thread,
+                    replyTo = replyTo,
                     onNeedPermission = {
-                        pendingSms = contact.phone to body
+                        pendingCellularSend = PendingCellularSend(contact, body, replyTo)
                         smsTarget = contact
                         smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
                     },
@@ -204,6 +215,8 @@ fun HomeRoute(
                 )
             },
             showKioskLauncherHint = showKioskLauncherHint,
+            simCardStatus = simCardStatus,
+            onOpenSimSettings = { SimCardStatusReader.openUnlockFlow(context) },
             communicationPermissions = communicationPermissions,
             onRequestCommunicationPermissions = {
                 communicationPermissionsLauncher.launch(communicationPermissionArray)
@@ -220,7 +233,10 @@ fun HomeRoute(
                 addContactError = null
                 addContactOpen = true
             },
-            modifier = Modifier.fillMaxSize(),
+            onMessageRead = viewModel::markMessageReadOnOpen,
+            onUpdateContact = { contact, name, phone, avatarUri, note, onDone ->
+                viewModel.updateContact(contact.id, name, phone, avatarUri, note, onDone)
+            },
         )
         threadContact?.let { tc ->
             val threadMsgs = state.messages
@@ -245,18 +261,21 @@ fun HomeRoute(
                 onDismiss = {
                     smsTarget = null
                     smsSendError = null
-                    pendingSms = null
+                    pendingCellularSend = null
                 },
                 onSend = { body ->
                     smsSendError = null
+                    val thread = state.messages.filter { it.belongsToContactThread(contact) }
                     sendMessageToContact(
                         context = context,
                         viewModel = viewModel,
                         contact = contact,
                         body = body,
                         useCellularSms = useCellularSms,
+                        threadMessages = thread,
+                        replyTo = null,
                         onNeedPermission = {
-                            pendingSms = contact.phone to body
+                            pendingCellularSend = PendingCellularSend(contact, body, replyTo = null)
                             smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
                         },
                     ) { result ->
@@ -298,12 +317,20 @@ fun HomeRoute(
     }
 }
 
+private data class PendingCellularSend(
+    val contact: Contact,
+    val body: String,
+    val replyTo: DeviceMessage? = null,
+)
+
 private fun sendMessageToContact(
     context: android.content.Context,
     viewModel: HomeViewModel,
     contact: Contact,
     body: String,
     useCellularSms: Boolean,
+    threadMessages: List<DeviceMessage>,
+    replyTo: DeviceMessage?,
     onNeedPermission: () -> Unit,
     onDone: (Result<Unit>) -> Unit,
 ) {
@@ -316,16 +343,23 @@ private fun sendMessageToContact(
         }
         ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) ==
             PackageManager.PERMISSION_GRANTED -> {
-            SmsSender.send(context, contact.phone, body).fold(
-                onSuccess = {
-                    viewModel.recordOutboundCellularSms(contact, body) { result ->
+            val preferred = resolveOutboundCellularChannel(
+                context,
+                contact,
+                threadMessages,
+                replyTo,
+            )
+            CellularOutbound.send(context, contact.phone, body, preferred).fold(
+                            onSuccess = { outcome ->
+                    viewModel.recordOutboundCellular(contact, body, outcome.channelUsed) { result ->
                         result.fold(
                             onSuccess = { onDone(Result.success(Unit)) },
                             onFailure = { e ->
+                                val ch = cellularChannelLabel(outcome.channelUsed)
                                 onDone(
                                     Result.failure(
                                         IllegalStateException(
-                                            "SMS odeslána. Zápis do cloudu se nepodařil: ${e.message ?: e}",
+                                            "$ch odeslána. Zápis do cloudu se nepodařil: ${e.message ?: e}",
                                         ),
                                     ),
                                 )
@@ -340,35 +374,3 @@ private fun sendMessageToContact(
     }
 }
 
-@Composable
-private fun KioskPinningEffect(
-    paired: Boolean,
-    isDefaultHomeApp: Boolean,
-    onHomeStateRefresh: () -> Unit,
-) {
-    val context = LocalContext.current
-    val activity = context as? ComponentActivity ?: return
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(paired, lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                onHomeStateRefresh()
-                if (paired && !isDefaultHomeApp) {
-                    KioskMode.tryStartPinning(activity)
-                } else {
-                    KioskMode.tryStopPinning(activity)
-                }
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onHomeStateRefresh()
-        if (paired && !isDefaultHomeApp) {
-            KioskMode.tryStartPinning(activity)
-        } else {
-            KioskMode.tryStopPinning(activity)
-        }
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-}

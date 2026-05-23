@@ -5,6 +5,12 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
+    <!-- Tablet senior: bez status lišty (MainActivity volá setTheme před super.onCreate). -->
+    <style name="Theme.SeniorHub.Kiosk" parent="Theme.SeniorHub">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
     <style name="Theme.SeniorHub.CallOverlay" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

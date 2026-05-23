@@ -105,7 +105,9 @@ class SeniorHubMessagingService : FirebaseMessagingService() {
         RemoteAudioVolume.applyLastKnown(applicationContext)
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             putExtra(MainActivity.EXTRA_FROM_MESSAGE_NOTIFICATION, true)
         }
         val pending = PendingIntent.getActivity(
@@ -132,7 +134,9 @@ class SeniorHubMessagingService : FirebaseMessagingService() {
         RemoteAudioVolume.applyLastKnown(applicationContext)
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
         }
         val pending = PendingIntent.getActivity(
             this,

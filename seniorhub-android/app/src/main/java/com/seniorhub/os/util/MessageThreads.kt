@@ -12,14 +12,13 @@ fun isDeviceOutboundDelivery(delivery: String?): Boolean {
 
 /** Vlákno s kontaktem = odchozí záznamy nebo příchozí SMS na stejné normalizované číslo. */
 fun DeviceMessage.belongsToContactThread(contact: Contact): Boolean {
-    val cNorm = normalizePhoneForDial(contact.phone) ?: return false
     if (isDeviceOutboundDelivery(delivery)) {
-        val oNorm = outboundPhone?.let { normalizePhoneForDial(it) } ?: return false
-        return cNorm == oNorm
+        val outbound = outboundPhone ?: return false
+        return phonesMatchForThread(outbound, contact.phone)
     }
     if (delivery == MvpRepository.VAL_DELIVERY_SMS_INBOUND) {
-        val iNorm = inboundFromPhone?.let { normalizePhoneForDial(it) } ?: return false
-        return cNorm == iNorm
+        val inbound = inboundFromPhone ?: return false
+        return phonesMatchForThread(inbound, contact.phone)
     }
     return false
 }

@@ -1,7 +1,11 @@
 package com.seniorhub.os.ui
 
 import android.app.Application
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
+import android.provider.Telephony
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.seniorhub.os.data.Contact
@@ -9,11 +13,14 @@ import com.seniorhub.os.data.DeviceConfig
 import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
 import com.seniorhub.os.data.MvpRepository
+import com.seniorhub.os.data.DayNightWeather
 import com.seniorhub.os.data.OpenMeteoWeather
 import com.seniorhub.os.util.CallHistoryEntry
+import com.seniorhub.os.util.CellularChannel
 import com.seniorhub.os.util.readActiveNetworkSummary
 import com.seniorhub.os.util.readBatteryStatus
 import com.seniorhub.os.util.readRecentCallHistory
+import com.seniorhub.os.util.syncInboundCellularMessages
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +33,7 @@ import kotlinx.coroutines.launch
 private const val HEARTBEAT_INTERVAL_MS = 3 * 60 * 1000L
 private const val WEATHER_REFRESH_MS = 30 * 60 * 1000L
 private const val CALL_HISTORY_REFRESH_MS = 20 * 1000L
+private const val INBOX_SYNC_MS = 15 * 1000L
 
 data class HomeUiState(
     val loading: Boolean = true,
@@ -37,7 +45,7 @@ data class HomeUiState(
     /** Všechny zprávy z Firestore (sestupně podle `createdAt`). */
     val messages: List<DeviceMessage> = emptyList(),
     val callHistory: List<CallHistoryEntry> = emptyList(),
-    val weatherLine: String? = null,
+    val weather: DayNightWeather? = null,
     val showPairingSheet: Boolean = false,
     val showKioskUnlock: Boolean = false,
     val kioskUnlockError: String? = null,
@@ -54,8 +62,21 @@ class HomeViewModel(
 
     private var kioskSecretTapCount = 0
     private var kioskSecretTapAnchorMs = 0L
+    private var inboxObserver: ContentObserver? = null
 
     init {
+        val app = getApplication<Application>()
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                viewModelScope.launch {
+                    runCatching { syncInboundCellularMessages(app, repository) }
+                }
+            }
+        }
+        app.contentResolver.registerContentObserver(Telephony.Sms.CONTENT_URI, true, observer)
+        app.contentResolver.registerContentObserver(Telephony.Mms.CONTENT_URI, true, observer)
+        inboxObserver = observer
+
         viewModelScope.launch {
             while (isActive) {
                 runCatching {
@@ -73,15 +94,15 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             runCatching {
-                OpenMeteoWeather.fetchCurrentSummary().getOrNull()?.let { line ->
-                    _state.update { it.copy(weatherLine = line) }
+                OpenMeteoWeather.fetchDayNightTemperatures().getOrNull()?.let { weather ->
+                    _state.update { it.copy(weather = weather) }
                 }
             }
             while (isActive) {
                 delay(WEATHER_REFRESH_MS)
                 runCatching {
-                    OpenMeteoWeather.fetchCurrentSummary().getOrNull()?.let { line ->
-                        _state.update { it.copy(weatherLine = line) }
+                    OpenMeteoWeather.fetchDayNightTemperatures().getOrNull()?.let { w ->
+                        _state.update { it.copy(weather = w) }
                     }
                 }
             }
@@ -91,6 +112,13 @@ class HomeViewModel(
                 val calls = readRecentCallHistory(getApplication())
                 _state.update { it.copy(callHistory = calls) }
                 delay(CALL_HISTORY_REFRESH_MS)
+            }
+        }
+        viewModelScope.launch {
+            runCatching { syncInboundCellularMessages(getApplication(), repository) }
+            while (isActive) {
+                delay(INBOX_SYNC_MS)
+                runCatching { syncInboundCellularMessages(getApplication(), repository) }
             }
         }
         viewModelScope.launch {
@@ -115,7 +143,7 @@ class HomeViewModel(
                         unreadMessage = null,
                         messages = emptyList(),
                         callHistory = _state.value.callHistory,
-                        weatherLine = null,
+                        weather = null,
                         showPairingSheet = false,
                         showKioskUnlock = false,
                         kioskUnlockError = null,
@@ -137,7 +165,7 @@ class HomeViewModel(
                         unreadMessage = unread,
                         messages = messages,
                         callHistory = _state.value.callHistory,
-                        weatherLine = _state.value.weatherLine,
+                        weather = _state.value.weather,
                         showPairingSheet = device?.paired != true,
                         showKioskUnlock = false,
                         kioskUnlockError = null,
@@ -169,6 +197,14 @@ class HomeViewModel(
         }
     }
 
+    /** Po otevření karty na dashboardu — přechod na design `message-read`. */
+    fun markMessageReadOnOpen(message: DeviceMessage) {
+        if (message.readAt != null) return
+        viewModelScope.launch {
+            runCatching { repository.markMessageRead(message.id) }
+        }
+    }
+
     /**
      * Tablet bez mobilní SMS — záznam do Firestore (rodina ve webu); viz [com.seniorhub.os.data.MvpRepository.sendTabletFirestoreMessage].
      */
@@ -184,10 +220,40 @@ class HomeViewModel(
         }
     }
 
-    /** Přidání kontaktu přímo z tabletu (Firestore — stejně jako z admin aplikace). */
-    fun addContact(name: String, phone: String, avatarUri: String? = null, onDone: (Result<Unit>) -> Unit) {
+    fun recordOutboundCellular(
+        contact: Contact,
+        body: String,
+        channel: CellularChannel,
+        onDone: (Result<Unit>) -> Unit,
+    ) {
         viewModelScope.launch {
-            onDone(runCatching { repository.addContact(name, phone, avatarUri) })
+            onDone(runCatching { repository.recordOutboundCellular(contact, body, channel) })
+        }
+    }
+
+    /** Přidání kontaktu přímo z tabletu (Firestore — stejně jako z admin aplikace). */
+    fun addContact(
+        name: String,
+        phone: String,
+        avatarUri: String? = null,
+        note: String = "",
+        onDone: (Result<Unit>) -> Unit,
+    ) {
+        viewModelScope.launch {
+            onDone(runCatching { repository.addContact(name, phone, avatarUri, note) })
+        }
+    }
+
+    fun updateContact(
+        contactId: String,
+        name: String,
+        phone: String,
+        avatarUri: String?,
+        note: String,
+        onDone: (Result<Unit>) -> Unit,
+    ) {
+        viewModelScope.launch {
+            onDone(runCatching { repository.updateContact(contactId, name, phone, avatarUri, note) })
         }
     }
 
@@ -253,5 +319,11 @@ class HomeViewModel(
             kioskUnlockError = null,
         )
         return true
+    }
+
+    override fun onCleared() {
+        inboxObserver?.let { getApplication<Application>().contentResolver.unregisterContentObserver(it) }
+        inboxObserver = null
+        super.onCleared()
     }
 }

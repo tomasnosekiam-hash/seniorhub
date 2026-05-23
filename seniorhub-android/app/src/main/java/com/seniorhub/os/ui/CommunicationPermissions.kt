@@ -12,13 +12,14 @@ data class CommunicationPermissions(
     val callGranted: Boolean,
     val sendSmsGranted: Boolean,
     val receiveSmsGranted: Boolean,
+    val readSmsGranted: Boolean,
     val callLogGranted: Boolean,
 ) {
     val allGranted: Boolean
-        get() = callGranted && sendSmsGranted && receiveSmsGranted && callLogGranted
+        get() = callGranted && sendSmsGranted && receiveSmsGranted && readSmsGranted && callLogGranted
 
     companion object {
-        val AllGranted = CommunicationPermissions(true, true, true, true)
+        val AllGranted = CommunicationPermissions(true, true, true, true, true)
     }
 }
 
@@ -36,6 +37,10 @@ fun communicationPermissionsOf(context: Context): CommunicationPermissions {
             context,
             Manifest.permission.RECEIVE_SMS,
         ) == PackageManager.PERMISSION_GRANTED,
+        readSmsGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_SMS,
+        ) == PackageManager.PERMISSION_GRANTED,
         callLogGranted = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CALL_LOG,
@@ -47,5 +52,6 @@ val communicationPermissionArray: Array<String> = arrayOf(
     Manifest.permission.CALL_PHONE,
     Manifest.permission.SEND_SMS,
     Manifest.permission.RECEIVE_SMS,
+    Manifest.permission.READ_SMS,
     Manifest.permission.READ_CALL_LOG,
 )

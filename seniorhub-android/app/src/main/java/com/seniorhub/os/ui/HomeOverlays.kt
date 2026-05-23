@@ -51,6 +51,9 @@ import com.seniorhub.os.data.Contact
 import com.seniorhub.os.data.DeviceMessage
 import com.seniorhub.os.data.DeviceSettings
 import com.seniorhub.os.data.MvpRepository
+import com.seniorhub.os.ui.components.DashboardModalCard
+import com.seniorhub.os.ui.components.DashboardModalScrim
+import com.seniorhub.os.ui.theme.SeniorHubDesign
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -111,12 +114,7 @@ internal fun ContactThreadOverlay(
                 ) {
                     items(messages, key = { it.id }) { m ->
                         val timeLabel = m.createdAt?.toDate()?.let { fmt.format(it) } ?: "—"
-                        val tech = when (m.delivery) {
-                            MvpRepository.VAL_DELIVERY_TABLET_FIRESTORE -> "Aplikace (cloud)"
-                            MvpRepository.VAL_DELIVERY_SMS_CELLULAR -> "SMS (odchozí)"
-                            MvpRepository.VAL_DELIVERY_SMS_INBOUND -> "SMS (příchozí)"
-                            else -> "Tablet"
-                        }
+                        val tech = com.seniorhub.os.util.messageDeliveryTechLabel(m)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -184,23 +182,22 @@ internal fun SmsComposeOverlay(
             "Na telefon příjemce nedorazí jako klasická SMS — uvidí ji přihlášená rodina v aplikaci."
     }
     val sendLabel = if (useCellularSms) "Odeslat SMS" else "Odeslat přes aplikaci"
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xEE000000)),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        DashboardModalScrim(onDismiss = onDismiss)
+        DashboardModalCard(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth(0.55f),
+        ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .background(Color(0xFF111111))
-                .border(1.dp, Color(0xFFFFFF00))
-                .padding(24.dp),
+                .fillMaxWidth()
+                .padding(32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
                 text = title,
-                color = Color(0xFFFFFF00),
+                color = SeniorHubDesign.AccentGold,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -261,13 +258,14 @@ internal fun SmsComposeOverlay(
                     onClick = { onSend(text) },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFFF00),
-                        contentColor = Color.Black,
+                        containerColor = SeniorHubDesign.MessageSurface,
+                        contentColor = SeniorHubDesign.Black,
                     ),
                 ) {
                     Text(sendLabel, fontSize = 18.sp)
                 }
             }
+        }
         }
     }
 }
@@ -529,6 +527,68 @@ internal fun AlertOverlay(
                 ),
             ) {
                 Text("Rozumím", fontSize = 20.sp)
+            }
+        }
+    }
+}
+
+@Composable
+internal fun SimUnlockOverlay(
+    message: String,
+    onUnlock: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xEE000000)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.88f)
+                .background(Color(0xFF111111))
+                .border(1.dp, Color(0xFFFFCC00))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = "SIM karta je zamčená",
+                color = Color(0xFFFFCC00),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = message,
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 18.sp,
+            )
+            Text(
+                text = "Tip: po restartu se dialog SIM někdy zobrazí pod aplikací — tlačítkem níže otevřete nastavení SIM.",
+                color = Color.White.copy(alpha = 0.75f),
+                fontSize = 16.sp,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Později", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = onUnlock,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFCC00),
+                        contentColor = Color.Black,
+                    ),
+                ) {
+                    Text("Odemknout SIM", fontSize = 18.sp)
+                }
             }
         }
     }

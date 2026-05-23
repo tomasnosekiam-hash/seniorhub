@@ -5,7 +5,7 @@ Tento dokument slouží jako **rychlá orientace** v projektu a jako „paměť�
 ## Zásady práce s tímto repem
 - **Číst on-demand**: před změnami načíst jen relevantní soubory.
 - **Kontext minimum**: pro pokračování obvykle stačí tento soubor + **nejnovější záznam** v `docs/changes/` (viz níže).
-- **Zápisy změn**: každá nová etapa práce dostane nový soubor v `docs/changes/` ve formátu `YYYY-MM-DD-kratky-nazev.md`.
+- **Zápisy změn**: každá nová etapa práce dostane nový soubor v `docs/changes/` ve formátu `YYYY-MM-DD-HHMM-kratky-nazev.md` (datum + čas vytvoření záznamu, např. `2026-05-23-0959-android-rcs-inbox-sync.md`). Starší soubory bez času v názvu zůstávají platné.
 - **Co je hotové (changes)**: brát **poslední soubor podle data v názvu** — prefix `YYYY-MM-DD` určuje pořadí; **nejvyšší datum = poslední dokončená etapa** popsaná v repu. Při více souborech se **stejným datem** rozhoduje **čas poslední úpravy** souboru (mtime). Starší soubory jsou historie; pro aktuální stav implementation vždy nejdřív přečíst ten nejnovější záznam.
 - **Changelog**: jednotlivé etapy jsou v **`docs/changes/`** (jeden soubor na etapu); samostatný kořenový `CHANGELOG.md` se nepoužívá — tento dokument + `docs/changes/` tvoří „živý“ přehled.
 
@@ -13,7 +13,7 @@ Tento dokument slouží jako **rychlá orientace** v projektu a jako „paměť�
 
 - **Firestore**: model `devices` / `config` / `messages` / kontakty; **rules** včetně rebindu anonymního tabletu po přeinstalaci (`docs/changes/2026-04-14-firestore-permission-rebind.md`); u zpráv od tabletu `delivery` (`tablet_firestore` / `sms_cellular` / `sms_inbound` u příchozí SMS), odchozí cíl (`docs/changes/2026-04-15-unified-contact-thread-sms-mirror.md`); **role `viewer`** u `deviceAdmins` omezuje zápis `contacts` a `config` (`docs/changes/2026-04-16-inbound-sms-fcm-roles-web-viewer.md`); dokončení párování (**`paired` / `pairedAt`**) pro viewer a přísnější **`pairingClaims` update** (`docs/changes/2026-04-22-pairing-ux-firestore-matej-stt-firebase-cli.md`).
 - **Web**: PIN/SIM, volitelné `assistant_name` v configu, profil seniora, nouzové kontakty, vzkazy, párování s volbou **správce vs člen rodiny (viewer)**; u viewer účtu jen vzkazy (bez úprav PIN/kontaktů); **přehlednější párování** (seznam „Moje tablety“ nahoře, nápověda, kontrola již existující vazby, jeden batch včetně `paired`) — `docs/changes/2026-04-22-pairing-ux-firestore-matej-stt-firebase-cli.md`.
-- **Android Senior (tablet)**: PIN z cloudu, **kiosk** (lock task + možnost výchozí domovské aplikace + `singleTask`, viz `docs/changes/2026-04-15-senior-kiosk-home-locktask.md`), kiosk break, kontakty → hovor dotykem, SMS odchozí + zrcadlo do Firestore, **příjem SMS** do stejného vlákna u známého kontaktu (`RECEIVE_SMS`); FCM / vzkazy; **baterie + heartbeat** a **`status/main` (síť)**; řádek počasí (Open-Meteo) na dashboardu — starší kroky v `docs/changes/2026-04-14-*.md`, doplnění 2026-04-15 v `docs/changes/README.md`, etapa 2026-04-16 v `docs/changes/2026-04-16-inbound-sms-fcm-roles-web-viewer.md`.
+- **Android Senior (tablet)**: PIN z cloudu, **kiosk** (lock task + výchozí domovská aplikace + `singleTask`, probuzení → znovu pin; provozní checklist `docs/KIOSK_TABLET_SETUP.md`; viz `docs/changes/2026-04-15-senior-kiosk-home-locktask.md`), kiosk break, kontakty → hovor dotykem, SMS odchozí + zrcadlo do Firestore, **příjem SMS a RCS** do stejného vlákna u známého kontaktu (`RECEIVE_SMS` + **`READ_SMS`** + periodická sync schránky — viz níže **RCS**); FCM / vzkazy; **baterie + heartbeat** a **`status/main` (síť)**; řádek počasí (Open-Meteo) na dashboardu; dashboard zprávy dle Pencil (`DashboardMessageCard`, nepřečtená / přečtená) — starší kroky v `docs/changes/2026-04-14-*.md`, doplnění 2026-04-15 v `docs/changes/README.md`, etapa 2026-04-16 v `docs/changes/2026-04-16-inbound-sms-fcm-roles-web-viewer.md`.
 - **Cloud Functions**: `notifyTabletOnNewMessage` (FCM vzkazy na tablet a kopie správcům); **`notifyAdminsOnDeviceIncident`** — FCM správcům při novém dokumentu v `devices/.../incidents` (payload `type: device_incident`); **oddělený Android `channelId`** pro incidenty vs. vzkazy; moduly `fcmConstants` / `adminFcmTokens`; **Node 22** + **`firebase-functions` v7** — viz `docs/changes/2026-04-17-fcm-emergency-channel-functions-maint.md`. Historické zápisy k hlasové cestě: `docs/changes/2026-04-16-android-matej-incidents-porcupine-fcm.md` atd.
 - **Hlasová vrstva / tabletový asistent**: **není v kódu** — odstraněn Android balík `matej/*`, Porcupine, Gemini v APK, Cloud callables `matej*` a související UI. Produktové směry a milníky zůstávají jen jako archiv v `docs/changes/*matej*`; poslední odstranění: `docs/changes/2026-04-16-android-cloud-remove-matej-voice-ai.md`. Referenční tablet: `docs/changes/2026-04-21-tablet-reference-on-hand-verification.md`.
 - **Další z Fáze A (bod 6+)**: hlasitý odposlech u hovoru, širší NLU než heuristiky (viz změna 2026-04-20), plnější onboarding Senior — viz tabulky níže.
@@ -57,7 +57,7 @@ Níže **tvůj seznam** oproti tabulkám níže: *Ano* = explicitně v plánu (�
 | **Správa kontaktů** (CRUD, pořadí) | `contacts` + úprava z webu; admin Android | Částečně – web + Android admin (řazení `sortOrder`); **webový viewer** (`role` v `deviceAdmins`) kontakty neupravuje (rules + UI); senior tablet jen používá. |
 | **Vytáčet hlasem** (bez dotyku / hands-free) | Matěj + intenty; řádek „vytočení“ | Plánováno – rozšířit o explicitní **hlasové vytáčení konkrétního kontaktu** (ne jen nouze). |
 | **Psát hlasem zprávy** (diktát do SMS / chatu) | Směr MVP + `ai` balíček | Plánováno – STT → kanál SMS nebo in-app. |
-| **SMS + interní zprávy v jednom chatu** u kontaktu | „Sjednocené vlákno“, `messages` + SMS | Částečně – **odchozí** + **příchozí** SMS u kontaktu (`sms_inbound`, známé číslo); UI vlákna; volitelné vylepšení celoobrazovkového chatu dál. |
+| **SMS + interní zprávy v jednom chatu** u kontaktu | „Sjednocené vlákno“, `messages` + SMS | Částečně – **odchozí** + **příchozí** SMS/RCS u kontaktu (`sms_inbound`, známé číslo); UI vlákna; volitelné vylepšení celoobrazovkového chatu dál. |
 | **Základní info o uživateli** – jméno, příjmení, adresa, **kritické kontakty v nouzi** | Rozšířit `config` / profil zařízení | Částečně – `config/main` + `is_emergency` u kontaktů; viz změna 2026-04-14 senior profile. |
 | **Vše administrovatelné** z admin části (Android + ideálně web) | Dashboard admin, web | Částečně – cíl; explicitně **jeden zdroj pravdy ve Firestore** upravovaný jen správcem. |
 | **Hlasová asistence** (dříve „Matěj“): poslouchat, vytáčet, psát zprávy, … | Tabulka níže | **Z aplikace odstraněno** (`docs/changes/2026-04-24-android-remove-matej-voice-module.md`). **Směr 2.0:** `docs/changes/2026-04-25-matej-2-product-spec.md`; doplňující plán dovedností: `docs/changes/2026-04-20-matej-postwake-skills-natural-speech-plan.md`. |
@@ -99,7 +99,7 @@ Souvisící věci **dělat společně** v jedné nebo v těsně navazujících i
 | Podbalík | Co patří dohromady |
 |----------|-------------------|
 | **Kiosk a shell tabletu (Senior)** | Kiosk / launcher chování, základní „zero UI“, pairing, skryté gesto + **PIN z cloudu**, odemčení do systémových nastavení dle spec – **zásadní pro klientskou verzi**. |
-| **Kanály zpráv** | Interní `messages`, SMS, jednotné vlákno u kontaktu; fronty při výpadku; potvrzení přečtení; FCM pro příchozí. |
+| **Kanály zpráv** | Interní `messages`, SMS, **RCS** (kde systém zpřístupní schránku), jednotné vlákno u kontaktu; fronty při výpadku; potvrzení přečtení; FCM pro příchozí. |
 | **Hlas a text (budoucí)** | Až bude hlasová vrstva znovu v produktu: STT diktát, TTS, hlasové vytáčení; sdílená úprava kontaktů z webu/adminu. |
 | **Asistent (budoucí)** | Wake / poslech, intenty na volání a zprávy, repro u hovoru; napojení na stejné kontakty jako ruční UI — zatím mimo aplikaci (`2026-04-24-android-remove-matej-voice-module.md`). |
 | **Provoz komunikace** | Průvodce oprávněními (telefon, SMS, …) v logickém pořadí; stav „chybí oprávnění“; přístupnost ovládání chatu a hovorů (velký text, kontrast); **lokalizace** (min. čeština) pro UI. |
@@ -156,7 +156,7 @@ Doporučené **dříve vyjmenované doplnky**, které spolu logicky souvisí –
 | **Hlasem diktovat** zprávy (STT → SMS nebo in-app) | Plánováno | P0 | Minimálně jeden kanál v MVP. |
 | **Jednotný chat** s kontaktem (SMS + interní zprávy v jednom vlákně) | Částečně | P0 | Odchozí + příchozí SMS u kontaktu ve Firestore (`sms_inbound`); vlákno v UI. |
 | SMS **odeslání** z kontaktů (tablet, psaní + odeslat) | Hotovo | P0 | `SEND_SMS`; viz `docs/changes/2026-04-14-android-send-sms.md`. |
-| SMS **čtení** / sjednocení s in-app chatem | Částečně | P1 | Příchozí SMS do vlákna (2026-04-16); TTS / další úpravy dál. |
+| SMS **čtení** / sjednocení s in-app chatem | Částečně | P1 | Příchozí SMS do vlákna (2026-04-16); **RCS** přes sync systémové schránky (`READ_SMS`, viz **RCS** níže); TTS / další úpravy dál. |
 | **Počasí** – widget na ploše (free API + cache) | Částečně | P1 | Open-Meteo řádek na dashboardu tabletu; samostatný home screen widget + sdílení s Matějem plánováno. |
 | Příjem **FCM** → fullscreen vzkaz / prioritní UI | Částečně | P0 | Push + překryv z Firestore; v popředí i lokální notifikace (viz `docs/changes/2026-04-14-fcm-foreground-notification.md`); plné systémové „fullscreen“ dle produktu dál. |
 | Modul **Matěj** – plný rozsah: poslech, hovory, psaní/čtení zpráv, repro, počasí (viz tabulka schopností) | Částečně | P1 | Jen **Senior**; **P0 částečně**: foreground služba, wake (Porcupine/STT), nouzové volání, TTS, `incidents` + FCM — viz `docs/changes/2026-04-16-android-matej-incidents-porcupine-fcm.md`; P1 = diktát, čtení zpráv, repro, počasí skill, Gemini. |
@@ -245,6 +245,17 @@ Jedno `app` modul; logika **rozvržená do balíčků** (současný kód je čas
 - **Obsah**: `notification` + `data` payload (ID zařízení, typ události) pro správné otevření obrazovky na tabletu.
 
 ## Android aplikace (dva režimy v jedné app)
+
+### Příchozí SMS a RCS (tablet Senior)
+
+- **Klasická SMS**: `IncomingSmsReceiver` na `android.provider.Telephony.SMS_RECEIVED` — okamžité zrcadlo do `devices/.../messages` s `delivery: sms_inbound`, pokud číslo odpovídá kontaktu ve Firestore.
+- **RCS (a SMS bez broadcastu)**: **RCS neposílá spolehlivě `SMS_RECEIVED`**. Na referenčním tabletu (Google Zprávy) RCS často končí v **`Telephony.Mms`** (MMS provider), ne v `Telephony.Sms`. Doplňková cesta: **`READ_SMS`**, čtení SMS + MMS schránky (`util/InboundCellularInboxReader.kt`), deduplikace `InboundCellularDedupStore` (klíče `sms:{id}` / `mms:{id}`), zápis přes `syncInboundCellularMessages` — spouštění cca každých **15 s**, `ContentObserver` na SMS i MMS, po příjmu SMS v receiveru.
+- **Stejný datový model**: RCS i SMS končí jako `sms_inbound` (UI vlákno, dashboard, web); odesílatel musí být v **kontaktech** tabletu. Kanál je v poli **`cellular_channel`** (`sms` \| `rcs`).
+- **Odchozí odpověď**: stejný kanál jako poslední příchozí (SMS → SMS; RCS → RCS při Wi‑Fi/mobilních datech, jinak SMS). Nová zpráva bez historie preferuje RCS při síti (`CellularOutbound`). Viz `docs/changes/2026-05-23-1200-android-cellular-reply-channel.md`.
+- **Omezení**: pokud výchozí aplikace Zprávy (Google Messages) **nezapíše** RCS do systémového Telephony provideru, třetí app ji neuvidí — spolehlivá náhrada zůstává **vzkaz z webu / Firestore** (FCM). Plná RCS integrace jako u výchozí SMS aplikace by vyžadovala roli **výchozí SMS handler** (mimo aktuální scope).
+- **Oprávnění v UI**: `CommunicationPermissions` — `receiveSmsGranted` + **`readSmsGranted`** (banner „čtení schránky (RCS)“).
+- **Záznam etapy**: `docs/changes/2026-05-23-0959-android-rcs-inbox-sync.md`.
+
 ### Senior (kiosk / klient)
 - **Produktová priorita**: tato vrstva je **hlavní uživatelská hodnota** – tablet jako kioskový klient s komunikací a Matějem.
 - Cíl: „zero UI“ launcher na tabletu pro seniora; vstup do nastavení chráněný (např. skryté gesto + **Admin PIN** synchronizovaný z cloudu – viz `oldies_project.md`).
@@ -330,7 +341,7 @@ Foreground Service naslouchá klíčovému slovu → po detekci krátké nahráv
   - `name`, `phone`, `sortOrder`, `is_emergency` (boolean, priorita nouze)
 - `devices/{deviceId}/messages/{messageId}`
   - `body`, `createdAt`, `senderUid`, `senderDisplayName`, `readAt` (tablet při potvrzení u vzkazů od rodiny; u odchozích / příchozích zrcadlech může být `readAt` hned při vytvoření)
-  - `delivery`: od tabletu `tablet_firestore`, `sms_cellular` (odchozí) nebo `sms_inbound` (příchozí SMS); u odchozích `outbound_phone`, `outbound_name`; u příchozích `inbound_from_phone`, `inbound_from_name`
+  - `delivery`: od tabletu `tablet_firestore`, `sms_cellular` (odchozí) nebo `sms_inbound` (příchozí SMS / RCS ze systémové schránky); u odchozích `outbound_phone`, `outbound_name`; u příchozích `inbound_from_phone`, `inbound_from_name`
 - `pairingClaims/{code}`
   - `code`, `deviceId`, `deviceAuthUid`, `expiresAt`, `usedAt`, `usedByUid`
 - `deviceAdmins/{deviceId}_{uid}`

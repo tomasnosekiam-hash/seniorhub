@@ -10,6 +10,8 @@ data class Contact(
     /** Řazení v seznamu (`devices/.../contacts.sortOrder`). */
     val sortOrder: Long = 0L,
     val avatarUri: String? = null,
+    /** Volná poznámka k osobě (např. „dcera Petra“, „domov důchodců“). */
+    val note: String = "",
 )
 
 data class DeviceSettings(
@@ -57,4 +59,6 @@ data class DeviceMessage(
     /** U [delivery] `sms_inbound` — odesílatel (telefon). */
     val inboundFromPhone: String? = null,
     val inboundFromName: String? = null,
+    /** `sms` | `rcs` — kanál u mobilních zpráv (příchozí i odchozí zrcadlo). */
+    val cellularChannel: String? = null,
 )

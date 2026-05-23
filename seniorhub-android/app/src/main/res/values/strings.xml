@@ -27,6 +27,17 @@
     <string name="contact_add_save">Uložit</string>
     <string name="contact_add_cancel">Zrušit</string>
     <string name="contact_add_cloud_hint">Kontakt se uloží do cloudu — uvidí ho i rodina ve webové administraci.</string>
+    <string name="contact_edit_title">Upravit kontakt</string>
+    <string name="contact_edit_save">Uložit</string>
+    <string name="contact_edit_cancel">Zrušit</string>
+    <string name="contact_edit_name_label">Jméno a příjmení</string>
+    <string name="contact_edit_phone_label">Telefon</string>
+    <string name="contact_edit_note_label">Poznámka</string>
+    <string name="contact_edit_note_placeholder">Např. „dcera Petra“ nebo „pečovatelka“.</string>
+    <string name="contact_edit_avatar_section">Fotka kontaktu</string>
+    <string name="contact_edit_avatar_change">Změnit fotku</string>
+    <string name="contact_edit_avatar_add">Přidat fotku</string>
+    <string name="contact_edit_avatar_remove">Odebrat fotku</string>
     <string name="contact_badge_emergency">Nouze</string>
     <string name="contact_name_fallback">(bez jména)</string>
     <string name="dashboard_pairing_connected">Správci připojeni</string>
@@ -56,7 +67,11 @@
     <string name="system_field_network">Síť</string>
     <string name="system_field_address">Adresa</string>
     <string name="comm_perm_banner_title">Volání a SMS</string>
-    <string name="comm_perm_banner_body">Povol hovory, odesílání SMS a příjem SMS — bez toho nejde vytočit kontakt ani poslat klasickou SMS a příchozí SMS se nepropojí s kontakty.</string>
+    <string name="comm_perm_banner_body">Povol hovory, SMS a čtení schránky — bez toho nejde volat, posílat zprávy a příchozí SMS/RCS (kde je systém zpřístupní) se nepropojí s kontakty.</string>
     <string name="comm_perm_banner_action">Povolit</string>
     <string name="comm_perm_banner_settings">Nastavení aplikace</string>
+    <string name="sim_unlock_banner_title">SIM karta</string>
+    <string name="sim_unlock_action">Odemknout SIM</string>
+    <string name="sim_unlock_later">Později</string>
+    <string name="sim_unlock_overlay_hint">Po restartu tabletu je potřeba znovu zadat PIN SIM karty. Otevřou se systémová nastavení — bez toho nefungují volání, SMS ani mobilní data.</string>
 </resources>
